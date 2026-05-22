@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birmingham Employment Deprivation Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #161b26;
+  --surface2: #1e2535;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #e8eaf0;
+  --muted: #7a8499;
+  --accent: #4f9de8;
+  --accent2: #a78bfa;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --green: #4ade80;
+  --amber: #f59e0b;
+  --red: #e85020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; overflow: hidden; }
+
+/* ═══════════════════════════════════════
+   LOADING TERMINAL OVERLAY
+═══════════════════════════════════════ */
+#loading-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #080b10;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: var(--mono);
+}
+.terminal-window {
+  width: min(720px, 96vw);
+  border: 1px solid rgba(79,157,232,0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(79,157,232,0.08), 0 0 120px rgba(0,0,0,0.6);
+}
+.terminal-titlebar {
+  background: #111720;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 9px 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.t-dot { width: 10px; height: 10px; border-radius: 50%; }
+.t-dot-r { background: #e85020; }
+.t-dot-y { background: #f59e0b44; }
+.t-dot-g { background: #4ade8044; }
+.t-title { font-size: 11px; color: var(--muted); margin-left: 8px; letter-spacing: 0.04em; }
+.terminal-body {
+  background: #0a0e15;
+  padding: 24px 28px 28px;
+  min-height: 360px;
+}
+.ascii-header {
+  font-size: 10px;
+  line-height: 1.25;
+  color: rgba(79,157,232,0.7);
+  margin-bottom: 20px;
+  white-space: pre;
+  letter-spacing: 0.02em;
+}
+.t-log { display: flex; flex-direction: column; gap: 5px; }
+.t-line {
+  font-size: 12px;
+  line-height: 1.6;
+  display: flex; align-items: baseline; gap: 10px;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.t-line.visible { opacity: 1; transform: none; }
+.t-ts { color: rgba(79,157,232,0.4); font-size: 10px; flex-shrink: 0; }
+.t-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+.t-badge-info  { background: rgba(79,157,232,0.15); color: #4f9de8; border: 1px solid rgba(79,157,232,0.3); }
+.t-badge-ok    { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.t-badge-warn  { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.t-badge-err   { background: rgba(232,80,32,0.12);  color: #e85020; border: 1px solid rgba(232,80,32,0.3); }
+.t-badge-spin  { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); animation: spin-badge 0.1s steps(1) infinite; }
+.t-msg { color: var(--muted); font-size: 12px; }
+.t-msg strong { color: var(--text); font-weight: 500; }
+.t-msg .hi { color: #4ade80; }
+.t-msg .warn { color: #f59e0b; }
+.t-msg .err { color: #e85020; }
+.t-cursor {
+  display: inline-block; width: 7px; height: 13px;
+  background: rgba(79,157,232,0.7);
+  vertical-align: middle; margin-left: 4px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes spin-badge {
+  0%   { content: '⠋'; }
+  12%  { content: '⠙'; }
+  25%  { content: '⠹'; }
+  37%  { content: '⠸'; }
+  50%  { content: '⠼'; }
+  62%  { content: '⠴'; }
+  75%  { content: '⠦'; }
+  87%  { content: '⠧'; }
+}
+.spinner-chars { display: inline-block; }
+
+.progress-bar-wrap {
+  margin-top: 20px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  height: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f9de8, #a78bfa);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+#loading-overlay.fade-out {
+  animation: overlay-fade 0.5s ease forwards;
+}
+@keyframes overlay-fade {
+  to { opacity: 0; pointer-events: none; }
+}
+
+/* ═══════════════════════════════════════
+   DATA SOURCE BADGE — live vs cached
+═══════════════════════════════════════ */
+.ds-pill {
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 7px; border-radius: 12px;
+  letter-spacing: 0.03em;
+}
+.ds-live { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+.ds-cached { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+.header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: baseline; gap: 14px; }
+.header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.header-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.data-badge { font-size: 10px; font-family: var(--mono); padding: 3px 8px; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.data-badge .dot { font-size: 8px; }
+.data-badge .dot-live { color: #4ade80; }
+.data-badge .dot-cached { color: #f59e0b; }
+.refresh-btn {
+  font-size: 10px; font-family: var(--mono); padding: 4px 10px;
+  border: 1px solid var(--border2); border-radius: 5px;
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.refresh-btn:hover { color: var(--text); border-color: rgba(79,157,232,0.4); }
+.refresh-btn.spinning .r-icon { display: inline-block; animation: rotate 0.8s linear infinite; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════ */
+.main { display: grid; grid-template-columns: 1fr 380px; height: calc(100vh - 57px); overflow: hidden; }
+.left-col { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.right-col { border-left: 1px solid var(--border); overflow-y: auto; background: var(--surface); }
+
+/* ═══════════════════════════════════════
+   STATS ROW
+═══════════════════════════════════════ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden; }
+.stat-label { font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, rgba(255,255,255,0.04) 50%, var(--surface2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+  color: transparent !important;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* VIEW CONTROLS */
+.view-controls { display: flex; gap: 8px; align-items: center; }
+.view-btn { font-size: 12px; padding: 6px 14px; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--sans); transition: all 0.15s; }
+.view-btn:hover { color: var(--text); background: var(--surface2); }
+.view-btn.active { background: var(--surface2); color: var(--text); border-color: rgba(79,157,232,0.5); }
+.view-label { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+/* PANELS */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 500; }
+.panel-hint { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+/* GRID VIEW */
+.ward-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; padding: 16px; }
+.ward-card { border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; overflow: hidden; }
+.ward-card:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.15); }
+.ward-card.selected { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent); }
+.wc-name { font-size: 12px; font-weight: 500; line-height: 1.3; margin-bottom: 8px; }
+.wc-score { font-size: 20px; font-weight: 600; font-family: var(--mono); margin-bottom: 4px; letter-spacing: -0.02em; }
+.wc-label { font-size: 10px; color: rgba(255,255,255,0.5); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+.wc-bars { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.wc-bar-row { display: flex; align-items: center; gap: 5px; }
+.wc-bar-track { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.wc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.wc-bar-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+/* SCATTER VIEW */
+#scatter-container { height: 380px; padding: 16px; position: relative; }
+
+/* LIST VIEW */
+.ward-list { padding: 8px; }
+.ward-row { display: grid; grid-template-columns: 24px 1fr 70px 70px 70px 80px; gap: 8px; align-items: center; padding: 9px 12px; border-radius: 6px; cursor: pointer; transition: background 0.12s; font-size: 12px; }
+.ward-row:hover { background: var(--surface2); }
+.ward-row.selected { background: rgba(79,157,232,0.1); }
+.ward-row.header-row { padding: 6px 12px; color: var(--muted); font-size: 10px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; cursor: default; }
+.ward-row.header-row:hover { background: transparent; }
+.rank-num { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+.ward-name-cell { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.metric-cell { font-family: var(--mono); font-size: 12px; text-align: right; }
+.decile-bar-cell { display: flex; align-items: center; gap: 6px; }
+.decile-bar { height: 16px; border-radius: 3px; min-width: 4px; transition: width 0.3s; }
+.decile-text { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* RIGHT PANEL */
+.right-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted); padding: 40px; text-align: center; }
+.right-empty svg { opacity: 0.2; }
+.right-empty p { font-size: 13px; line-height: 1.6; }
+.detail-header { padding: 20px; border-bottom: 1px solid var(--border); }
+.detail-ward-name { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+.detail-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.detail-score-row { display: flex; gap: 10px; margin-top: 14px; }
+.detail-score-chip { flex: 1; background: var(--surface2); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border); }
+.dsc-label { font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.dsc-value { font-size: 18px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.02em; }
+.dsc-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.detail-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.detail-section-title { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.detail-chart-wrap { height: 130px; position: relative; }
+.meter-row { display: flex; flex-direction: column; gap: 8px; }
+.meter-item { display: grid; grid-template-columns: 140px 1fr 52px; gap: 8px; align-items: center; }
+.meter-label { font-size: 12px; color: var(--muted); }
+.meter-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+.meter-val { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--text); }
+
+/* LEGEND */
+.legend-row { display: flex; gap: 3px; align-items: center; }
+.legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+.legend-label { font-size: 10px; font-family: var(--mono); color: var(--muted); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ERROR TOAST */
+#error-toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #1a0f0a; border: 1px solid rgba(232,80,32,0.4);
+  border-radius: 8px; padding: 10px 16px;
+  font-family: var(--mono); font-size: 11px; color: #e85020;
+  display: none; z-index: 100; max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+#error-toast.show { display: flex; align-items: center; gap: 8px; animation: toast-in 0.2s ease; }
+@keyframes toast-in { from { opacity:0; transform: translateX(-50%) translateY(6px); } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     LOADING TERMINAL OVERLAY
+════════════════════════════════════════════════ -->
+<div id="loading-overlay">
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <div class="t-dot t-dot-r"></div>
+      <div class="t-dot t-dot-y"></div>
+      <div class="t-dot t-dot-g"></div>
+      <span class="t-title">data-pipeline · birmingham-employment-dashboard · v2.1</span>
+    </div>
+    <div class="terminal-body">
+      <div class="ascii-header" id="ascii-art"></div>
+      <div class="t-log" id="t-log"></div>
+      <div class="progress-bar-wrap" style="margin-top:18px">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     ERROR TOAST
+════════════════════════════════════════════════ -->
+<div id="error-toast">
+  <span>⚠</span>
+  <span id="error-msg"></span>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN DASHBOARD (hidden until loaded)
+════════════════════════════════════════════════ -->
+<div id="dashboard" style="display:none">
+
+<div class="header">
+  <div class="header-left">
+    <h1>Birmingham — Employment Disadvantage</h1>
+    <span class="header-sub">68 wards · 3 data layers</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="data-badge" id="badge-imd">IMD 2025 <span class="dot dot-cached">●</span></span>
+    <span class="data-badge" id="badge-nomis">NOMIS <span class="dot dot-cached">●</span></span>
+    <span class="data-badge" id="badge-census">Census 2021 <span class="dot dot-cached">●</span></span>
+    <button class="refresh-btn" onclick="reloadData()" title="Re-fetch live data">
+      <span class="r-icon">↻</span> refresh
+    </button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="left-col">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Birmingham avg</div>
+        <div class="stat-value" id="avg-claimant">—</div>
+        <div class="stat-sub">claimant rate %</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Highest ward</div>
+        <div class="stat-value" style="font-size:15px;margin-top:4px" id="highest-ward">—</div>
+        <div class="stat-sub" id="highest-rate">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Lowest ward</div>
+        <div class="stat-value" style="font-size:15px;margin-top:4px" id="lowest-ward">—</div>
+        <div class="stat-sub" id="lowest-rate">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Most deprived</div>
+        <div class="stat-value" id="deprived-count">—</div>
+        <div class="stat-sub">wards in decile 9–10</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="view-controls">
+        <span class="view-label">View:</span>
+        <button class="view-btn active" onclick="setView('grid',event)">Grid</button>
+        <button class="view-btn" onclick="setView('list',event)">Table</button>
+        <button class="view-btn" onclick="setView('scatter',event)">Scatter</button>
+      </div>
+      <div class="legend-row" style="gap:3px;align-items:center">
+        <span class="legend-label" style="margin-right:3px">Low</span>
+        <div class="legend-swatch" style="background:#2d5a1a"></div>
+        <div class="legend-swatch" style="background:#5a6e1a"></div>
+        <div class="legend-swatch" style="background:#9e8820"></div>
+        <div class="legend-swatch" style="background:#c85020"></div>
+        <div class="legend-swatch" style="background:#e82010"></div>
+        <span class="legend-label" style="margin-left:3px">High disadvantage</span>
+      </div>
+    </div>
+
+    <div class="panel" style="flex:1">
+      <div class="panel-header">
+        <span class="panel-title" id="panel-title">Ward grid — composite employment disadvantage score</span>
+        <span class="panel-hint" id="panel-hint">click a ward for detail →</span>
+      </div>
+      <div id="view-grid" class="ward-grid"></div>
+      <div id="view-list" style="display:none">
+        <div class="ward-list">
+          <div class="ward-row header-row">
+            <span>#</span><span>Ward</span>
+            <span style="text-align:right">IMD empl</span>
+            <span style="text-align:right">Claimant%</span>
+            <span style="text-align:right">Inactivity%</span>
+            <span>Score</span>
+          </div>
+          <div id="list-body"></div>
+        </div>
+      </div>
+      <div id="view-scatter" style="display:none">
+        <div style="padding:12px 16px 0;display:flex;gap:16px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--muted)"><span style="font-family:var(--mono)">X:</span> IMD employment score (structural deprivation)</div>
+          <div style="font-size:11px;color:var(--muted)"><span style="font-family:var(--mono)">Y:</span> Claimant rate %</div>
+          <div style="font-size:11px;color:var(--muted)"><span style="font-family:var(--mono)">Size:</span> Inactivity rate</div>
+        </div>
+        <div id="scatter-container"><canvas id="scatter-chart"></canvas></div>
+        <div style="padding:0 16px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:6px;padding:8px 10px">
+            <div style="font-size:10px;font-family:var(--mono);color:#4ade80;margin-bottom:3px">BOTTOM LEFT — Improving</div>
+            <div style="font-size:11px;color:var(--muted)">Lower structural deprivation + lower current claimant rate.</div>
+          </div>
+          <div style="background:rgba(232,80,32,0.06);border:1px solid rgba(232,80,32,0.15);border-radius:6px;padding:8px 10px">
+            <div style="font-size:10px;font-family:var(--mono);color:#e85020;margin-bottom:3px">TOP RIGHT — Compound disadvantage</div>
+            <div style="font-size:11px;color:var(--muted)">High structural deprivation + high current unemployment.</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:6px;padding:8px 10px">
+            <div style="font-size:10px;font-family:var(--mono);color:#f59e0b;margin-bottom:3px">BOTTOM RIGHT — Structural but recovering</div>
+            <div style="font-size:11px;color:var(--muted)">High IMD but lower current claimant rate.</div>
+          </div>
+          <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:6px;padding:8px 10px">
+            <div style="font-size:10px;font-family:var(--mono);color:#a78bfa;margin-bottom:3px">TOP LEFT — Recent decline</div>
+            <div style="font-size:11px;color:var(--muted)">Lower structural deprivation but rising claimant rate.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right-col" id="right-panel">
+    <div class="right-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <p>Select any ward from the grid, table, or scatter chart to see a detailed breakdown of employment disadvantage indicators.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /dashboard -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ASCII TERMINAL ANIMATION ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const ASCII_ART = `  ██████╗ ██╗██████╗ ███╗   ███╗██╗███╗   ██╗ ██████╗ ██╗  ██╗ █████╗ ███╗   ███╗
+  ██╔══██╗██║██╔══██╗████╗ ████║██║████╗  ██║██╔════╝ ██║  ██║██╔══██╗████╗ ████║
+  ██████╔╝██║██████╔╝██╔████╔██║██║██╔██╗ ██║██║  ███╗███████║███████║██╔████╔██║
+  ██╔══██╗██║██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██║   ██║██╔══██║██╔══██║██║╚██╔╝██║
+  ██████╔╝██║██║  ██║██║ ╚═╝ ██║██║██║ ╚████║╚██████╔╝██║  ██║██║  ██║██║ ╚═╝ ██║
+  ╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝`;
+
+const SPINNER_FRAMES = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+let spinnerIntervals = {};
+
+function ts() {
+  return new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function addLogLine(id, badge, badgeClass, msg) {
+  const log = document.getElementById('t-log');
+  const line = document.createElement('div');
+  line.className = 't-line';
+  line.id = 'line-' + id;
+  line.innerHTML = `
+    <span class="t-ts">${ts()}</span>
+    <span class="t-badge ${badgeClass}" id="badge-${id}">${badge}</span>
+    <span class="t-msg" id="msg-${id}">${msg}</span>`;
+  log.appendChild(line);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => line.classList.add('visible'));
+  });
+  return line;
+}
+
+function updateLine(id, badge, badgeClass, msg) {
+  const b = document.getElementById('badge-' + id);
+  const m = document.getElementById('msg-' + id);
+  if (b) { b.textContent = badge; b.className = 't-badge ' + badgeClass; }
+  if (m) m.innerHTML = msg;
+  clearSpinner(id);
+}
+
+let _spinFrame = 0;
+function startSpinner(id) {
+  clearSpinner(id);
+  spinnerIntervals[id] = setInterval(() => {
+    const b = document.getElementById('badge-' + id);
+    if (b) b.textContent = SPINNER_FRAMES[_spinFrame++ % SPINNER_FRAMES.length];
+  }, 80);
+}
+
+function clearSpinner(id) {
+  if (spinnerIntervals[id]) { clearInterval(spinnerIntervals[id]); delete spinnerIntervals[id]; }
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function typeAscii(text, el, delay = 0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      // Show line by line
+      const lines = text.split('\n');
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < lines.length) {
+          el.textContent += (i > 0 ? '\n' : '') + lines[i];
+          i++;
+        } else {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 35);
+    }, delay);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HARDCODED FALLBACK DATA
+// ═══════════════════════════════════════════════════════════════
+
+const FALLBACK_WARDS = [{"ward_code":"E05011095","ward_name":"Ladywood","imd_employment_score":0.381,"claimant_rate":11.1,"inactivity_sick_pct":18.3,"trend_12m":[11.3,12.1,10.5,10.0,11.6,11.4,11.5,11.2,11.0,11.1,11.4,11.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011119","ward_name":"Nechells","imd_employment_score":0.35,"claimant_rate":10.7,"inactivity_sick_pct":17.1,"trend_12m":[10.7,10.6,11.0,9.8,10.5,11.0,11.2,10.6,10.9,10.8,11.2,10.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011120","ward_name":"Newtown","imd_employment_score":0.343,"claimant_rate":10.4,"inactivity_sick_pct":16.8,"trend_12m":[11.0,10.3,9.3,10.0,9.5,9.6,9.6,10.0,10.8,10.5,10.3,10.4],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011088","ward_name":"Handsworth Wood","imd_employment_score":0.317,"claimant_rate":9.7,"inactivity_sick_pct":15.8,"trend_12m":[9.3,9.3,9.4,10.0,9.5,11.1,9.2,9.0,10.2,10.6,10.0,9.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011129","ward_name":"Washwood Heath","imd_employment_score":0.335,"claimant_rate":10.1,"inactivity_sick_pct":16.2,"trend_12m":[9.6,9.0,10.2,9.7,10.6,10.2,10.1,10.5,11.2,9.7,9.8,10.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011125","ward_name":"Soho & Jewellery Quarter","imd_employment_score":0.309,"claimant_rate":9.6,"inactivity_sick_pct":15.4,"trend_12m":[9.6,10.0,9.2,9.4,8.5,9.0,9.3,9.8,10.3,9.6,9.8,9.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011083","ward_name":"Erdington","imd_employment_score":0.296,"claimant_rate":9.2,"inactivity_sick_pct":15.2,"trend_12m":[9.0,9.3,7.7,10.6,7.6,8.9,9.3,9.1,9.0,8.3,8.7,9.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011126","ward_name":"Sparkbrook & Balsall Heath East","imd_employment_score":0.311,"claimant_rate":9.5,"inactivity_sick_pct":15.7,"trend_12m":[8.1,9.9,9.8,9.2,9.1,9.5,10.5,8.9,9.2,10.3,9.2,9.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011087","ward_name":"Handsworth","imd_employment_score":0.293,"claimant_rate":9.0,"inactivity_sick_pct":14.9,"trend_12m":[9.0,9.0,8.9,9.1,10.1,8.5,9.3,8.6,10.2,9.4,9.2,9.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011127","ward_name":"Springfield","imd_employment_score":0.28,"claimant_rate":8.6,"inactivity_sick_pct":14.4,"trend_12m":[8.6,8.3,7.9,8.7,8.5,9.8,8.2,8.8,7.7,8.4,8.8,8.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011086","ward_name":"Hall Green North","imd_employment_score":0.275,"claimant_rate":8.4,"inactivity_sick_pct":14.0,"trend_12m":[8.1,8.4,8.5,8.9,8.0,8.2,8.4,8.6,8.1,8.1,9.4,8.4],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011089","ward_name":"Heartlands","imd_employment_score":0.286,"claimant_rate":9.0,"inactivity_sick_pct":15.0,"trend_12m":[9.1,9.3,9.7,8.7,8.0,9.2,9.1,8.6,9.5,9.4,8.4,9.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011090","ward_name":"Hodge Hill","imd_employment_score":0.282,"claimant_rate":9.0,"inactivity_sick_pct":14.8,"trend_12m":[9.5,9.4,8.4,10.0,9.0,9.4,8.4,9.2,8.9,9.4,9.6,9.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011091","ward_name":"Kingstanding","imd_employment_score":0.264,"claimant_rate":8.1,"inactivity_sick_pct":13.3,"trend_12m":[9.2,8.1,9.4,7.8,8.3,7.8,7.7,8.1,7.9,8.2,6.8,8.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011092","ward_name":"Lozells","imd_employment_score":0.318,"claimant_rate":9.8,"inactivity_sick_pct":16.0,"trend_12m":[8.5,10.5,10.6,9.8,9.7,9.5,9.3,11.3,9.1,9.4,9.8,9.8],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011093","ward_name":"Moseley","imd_employment_score":0.191,"claimant_rate":5.8,"inactivity_sick_pct":10.3,"trend_12m":[6.6,7.1,6.1,6.0,5.1,5.3,5.8,6.1,6.1,5.5,5.1,5.8],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011118","ward_name":"Aston","imd_employment_score":0.349,"claimant_rate":10.5,"inactivity_sick_pct":17.0,"trend_12m":[10.9,10.3,10.4,10.1,9.8,11.0,10.3,11.0,10.5,10.3,8.4,10.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011096","ward_name":"Longbridge & West Heath","imd_employment_score":0.225,"claimant_rate":6.3,"inactivity_sick_pct":11.1,"trend_12m":[6.2,7.7,7.2,5.5,6.1,6.6,6.8,5.5,4.9,5.2,6.3,6.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011097","ward_name":"Northfield","imd_employment_score":0.203,"claimant_rate":6.0,"inactivity_sick_pct":10.9,"trend_12m":[6.3,5.9,6.2,6.2,5.5,5.8,5.2,5.4,6.2,6.8,5.9,6.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011098","ward_name":"Oscott","imd_employment_score":0.184,"claimant_rate":5.7,"inactivity_sick_pct":9.6,"trend_12m":[5.3,5.9,6.7,5.7,5.4,5.3,5.7,4.9,5.6,5.7,6.8,5.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011099","ward_name":"Perry Barr","imd_employment_score":0.244,"claimant_rate":7.2,"inactivity_sick_pct":12.4,"trend_12m":[6.9,7.0,7.6,7.6,8.1,6.6,8.0,6.2,7.3,7.6,8.0,7.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011100","ward_name":"Perry Common","imd_employment_score":0.234,"claimant_rate":7.0,"inactivity_sick_pct":12.0,"trend_12m":[7.8,8.1,8.1,5.8,7.5,5.9,8.0,7.2,6.3,8.2,7.4,7.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011101","ward_name":"Quinton","imd_employment_score":0.173,"claimant_rate":5.2,"inactivity_sick_pct":9.5,"trend_12m":[6.1,6.0,5.5,4.9,5.5,4.6,4.8,6.2,5.2,5.3,5.4,5.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011102","ward_name":"Shard End","imd_employment_score":0.264,"claimant_rate":7.9,"inactivity_sick_pct":13.0,"trend_12m":[7.5,7.4,8.6,7.8,8.2,7.8,8.3,7.8,8.4,7.8,8.4,7.9],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011103","ward_name":"Sheldon","imd_employment_score":0.192,"claimant_rate":5.8,"inactivity_sick_pct":10.4,"trend_12m":[5.2,5.8,5.4,5.6,5.8,5.8,6.5,5.5,5.6,4.8,5.5,5.8],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011104","ward_name":"Small Heath","imd_employment_score":0.326,"claimant_rate":9.9,"inactivity_sick_pct":16.3,"trend_12m":[9.4,11.0,9.8,9.4,9.7,10.5,9.5,10.2,10.3,10.3,10.7,9.9],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011105","ward_name":"Sparkhill","imd_employment_score":0.304,"claimant_rate":9.1,"inactivity_sick_pct":14.9,"trend_12m":[9.1,9.1,9.0,9.7,8.3,8.7,8.5,9.2,9.3,9.8,10.0,9.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011106","ward_name":"Stechford & Yardley North","imd_employment_score":0.247,"claimant_rate":7.4,"inactivity_sick_pct":12.8,"trend_12m":[7.0,7.0,7.8,6.5,7.2,7.0,7.4,7.5,7.4,8.1,7.5,7.4],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011107","ward_name":"Stockland Green","imd_employment_score":0.239,"claimant_rate":7.3,"inactivity_sick_pct":12.4,"trend_12m":[7.1,6.6,7.3,8.2,8.3,7.3,7.3,7.0,7.0,7.5,8.0,7.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011108","ward_name":"Sutton Four Oaks","imd_employment_score":0.076,"claimant_rate":2.3,"inactivity_sick_pct":5.3,"trend_12m":[1.3,2.6,1.4,0.8,1.1,1.5,2.9,1.8,2.2,1.6,2.7,2.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011109","ward_name":"Sutton Mere Green","imd_employment_score":0.094,"claimant_rate":2.8,"inactivity_sick_pct":5.6,"trend_12m":[2.8,3.3,2.1,2.0,2.0,2.7,2.8,3.0,2.7,3.3,2.5,2.8],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011110","ward_name":"Sutton New Hall","imd_employment_score":0.086,"claimant_rate":2.5,"inactivity_sick_pct":5.5,"trend_12m":[2.4,2.3,1.9,2.9,2.1,2.7,1.4,3.1,1.7,2.0,3.1,2.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011111","ward_name":"Sutton Trinity","imd_employment_score":0.099,"claimant_rate":2.9,"inactivity_sick_pct":6.0,"trend_12m":[2.9,1.7,3.5,2.7,2.9,2.1,2.6,2.6,3.0,3.5,3.4,2.9],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011112","ward_name":"Sutton Vesey","imd_employment_score":0.102,"claimant_rate":3.1,"inactivity_sick_pct":6.2,"trend_12m":[2.8,3.2,3.0,3.0,2.5,3.6,3.9,3.2,3.5,3.6,3.7,3.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011113","ward_name":"Tyburn","imd_employment_score":0.217,"claimant_rate":6.5,"inactivity_sick_pct":11.6,"trend_12m":[5.8,7.2,6.7,6.1,6.6,6.6,4.0,5.9,6.0,7.2,6.7,6.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011114","ward_name":"Weoley & Selly Oak","imd_employment_score":0.163,"claimant_rate":5.1,"inactivity_sick_pct":8.8,"trend_12m":[5.4,5.1,5.7,5.7,4.7,4.9,4.8,4.1,5.5,5.8,5.1,5.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011115","ward_name":"Yardley East","imd_employment_score":0.233,"claimant_rate":7.0,"inactivity_sick_pct":11.7,"trend_12m":[7.5,7.1,6.3,5.6,6.2,7.6,7.8,7.4,6.8,6.8,7.2,7.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011116","ward_name":"Yardley West & Stechford","imd_employment_score":0.241,"claimant_rate":7.0,"inactivity_sick_pct":12.4,"trend_12m":[7.1,6.5,6.5,7.3,6.5,7.0,7.7,6.1,8.2,7.9,6.3,7.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011117","ward_name":"Acocks Green","imd_employment_score":0.212,"claimant_rate":6.3,"inactivity_sick_pct":11.1,"trend_12m":[6.8,6.2,6.6,5.6,5.7,6.4,6.2,5.8,7.0,5.4,7.4,6.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011082","ward_name":"Edgbaston","imd_employment_score":0.147,"claimant_rate":4.6,"inactivity_sick_pct":8.2,"trend_12m":[4.5,4.7,4.8,4.3,4.9,5.6,3.9,5.6,4.5,4.1,6.1,4.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011084","ward_name":"Harborne","imd_employment_score":0.116,"claimant_rate":3.7,"inactivity_sick_pct":6.9,"trend_12m":[3.7,2.8,3.3,3.1,3.8,3.4,3.9,4.6,3.4,4.4,3.0,3.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011085","ward_name":"Hall Green South","imd_employment_score":0.179,"claimant_rate":5.6,"inactivity_sick_pct":9.5,"trend_12m":[5.5,5.1,5.6,5.9,5.7,5.9,4.6,5.4,5.8,6.0,4.6,5.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011121","ward_name":"Billesley","imd_employment_score":0.205,"claimant_rate":6.0,"inactivity_sick_pct":10.5,"trend_12m":[6.3,6.2,6.1,6.4,6.7,6.1,5.8,7.6,5.1,5.7,6.8,6.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011122","ward_name":"Bordesley & Highgate","imd_employment_score":0.31,"claimant_rate":9.4,"inactivity_sick_pct":15.2,"trend_12m":[8.8,9.5,9.5,9.6,10.0,9.2,9.7,8.9,10.2,9.8,9.7,9.4],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011123","ward_name":"Bordesley Green","imd_employment_score":0.291,"claimant_rate":8.7,"inactivity_sick_pct":14.7,"trend_12m":[9.5,9.4,7.9,8.0,8.8,9.4,8.1,8.9,9.9,7.3,8.4,8.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011124","ward_name":"Brandwood & Kings Heath","imd_employment_score":0.161,"claimant_rate":5.0,"inactivity_sick_pct":8.9,"trend_12m":[5.1,5.4,4.8,4.7,5.1,5.2,5.7,5.0,4.6,4.7,5.1,5.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011128","ward_name":"Stirchley","imd_employment_score":0.172,"claimant_rate":5.2,"inactivity_sick_pct":9.3,"trend_12m":[6.1,4.7,4.6,4.6,5.8,4.9,4.4,5.0,6.1,4.6,5.5,5.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011130","ward_name":"Bournbrook & Selly Park","imd_employment_score":0.138,"claimant_rate":4.3,"inactivity_sick_pct":7.6,"trend_12m":[4.2,4.6,4.0,3.4,5.0,4.1,4.1,4.3,4.9,4.5,4.1,4.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011131","ward_name":"Bournville & Cotteridge","imd_employment_score":0.126,"claimant_rate":4.0,"inactivity_sick_pct":7.3,"trend_12m":[2.7,3.3,4.9,4.0,4.0,4.2,4.0,3.3,3.2,2.9,4.3,4.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011132","ward_name":"Bromford & Hodge Hill","imd_employment_score":0.271,"claimant_rate":8.2,"inactivity_sick_pct":13.5,"trend_12m":[7.9,8.6,7.6,7.2,7.8,9.0,7.9,9.6,8.5,7.5,7.7,8.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011133","ward_name":"Castle Vale","imd_employment_score":0.258,"claimant_rate":8.0,"inactivity_sick_pct":13.3,"trend_12m":[6.2,7.8,7.6,7.4,7.7,8.2,7.3,8.8,7.3,7.3,8.2,8.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011134","ward_name":"Druids Heath & Monyhull","imd_employment_score":0.244,"claimant_rate":7.2,"inactivity_sick_pct":12.5,"trend_12m":[8.4,8.3,6.9,6.9,7.6,7.8,6.9,7.1,8.5,7.1,6.9,7.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011135","ward_name":"Fox Hollies","imd_employment_score":0.223,"claimant_rate":6.7,"inactivity_sick_pct":11.7,"trend_12m":[6.2,6.7,7.6,5.3,6.7,7.5,5.7,7.6,5.5,6.6,7.0,6.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011136","ward_name":"Garretts Green","imd_employment_score":0.253,"claimant_rate":7.6,"inactivity_sick_pct":13.1,"trend_12m":[6.5,7.5,7.5,8.1,5.7,6.4,7.3,7.6,7.1,7.5,6.9,7.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011137","ward_name":"Gravelly Hill","imd_employment_score":0.27,"claimant_rate":8.2,"inactivity_sick_pct":13.8,"trend_12m":[7.9,7.5,8.3,9.2,9.2,8.5,7.9,7.1,7.5,8.8,8.9,8.2],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011138","ward_name":"Kings Norton North","imd_employment_score":0.190,"claimant_rate":5.6,"inactivity_sick_pct":10.0,"trend_12m":[4.6,4.9,6.1,5.1,4.9,5.5,5.5,5.0,5.4,5.3,4.0,5.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011139","ward_name":"Kings Norton South","imd_employment_score":0.178,"claimant_rate":5.5,"inactivity_sick_pct":9.6,"trend_12m":[6.2,4.6,5.9,5.0,5.1,6.4,5.6,4.3,5.7,5.6,4.6,5.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011140","ward_name":"Pype Hayes","imd_employment_score":0.235,"claimant_rate":7.1,"inactivity_sick_pct":12.0,"trend_12m":[7.8,7.6,7.6,6.6,6.7,5.9,8.1,7.4,6.9,7.7,7.6,7.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011141","ward_name":"Lea Hall","imd_employment_score":0.221,"claimant_rate":6.6,"inactivity_sick_pct":11.2,"trend_12m":[7.7,7.2,6.3,6.3,6.9,6.4,6.2,6.7,6.6,6.7,7.0,6.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011142","ward_name":"Old Oscott","imd_employment_score":0.172,"claimant_rate":5.0,"inactivity_sick_pct":9.1,"trend_12m":[4.5,5.7,4.6,4.5,5.0,6.2,5.2,5.6,4.6,5.0,4.3,5.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011143","ward_name":"Perry Beeches","imd_employment_score":0.195,"claimant_rate":5.7,"inactivity_sick_pct":10.5,"trend_12m":[5.4,5.3,4.9,5.3,5.7,5.5,5.1,5.3,6.1,5.4,5.9,5.7],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011144","ward_name":"Rubery & Rednal","imd_employment_score":0.199,"claimant_rate":6.0,"inactivity_sick_pct":10.7,"trend_12m":[5.6,5.1,5.4,5.0,5.1,5.1,5.7,5.6,5.3,6.3,6.0,6.0],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011145","ward_name":"Walmley & Minworth","imd_employment_score":0.108,"claimant_rate":3.4,"inactivity_sick_pct":6.4,"trend_12m":[3.9,4.0,4.1,3.3,4.4,2.8,3.4,4.5,2.3,3.5,3.4,3.4],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011146","ward_name":"Balsall Heath West","imd_employment_score":0.296,"claimant_rate":9.1,"inactivity_sick_pct":14.6,"trend_12m":[10.3,8.9,8.8,7.4,10.2,8.9,8.4,9.9,9.8,9.2,8.2,9.1],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011147","ward_name":"Nechells East","imd_employment_score":0.292,"claimant_rate":8.6,"inactivity_sick_pct":14.3,"trend_12m":[8.9,8.5,8.6,8.7,9.2,8.1,9.0,8.4,9.6,9.0,9.0,8.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011148","ward_name":"South Yardley","imd_employment_score":0.209,"claimant_rate":6.3,"inactivity_sick_pct":11.3,"trend_12m":[6.1,7.0,7.3,7.0,6.7,6.8,5.8,5.4,6.9,6.1,6.3,6.3],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011149","ward_name":"Shard End East","imd_employment_score":0.249,"claimant_rate":7.5,"inactivity_sick_pct":12.7,"trend_12m":[6.3,8.3,8.1,7.6,6.1,8.0,7.7,7.3,7.2,6.8,8.1,7.5],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]},{"ward_code":"E05011150","ward_name":"Kings Heath","imd_employment_score":0.149,"claimant_rate":4.6,"inactivity_sick_pct":8.2,"trend_12m":[5.0,4.1,4.2,3.9,4.5,4.5,4.7,4.2,5.1,5.2,5.5,4.6],"trend_months":["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26"]}];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE & CONFIG
+// ═══════════════════════════════════════════════════════════════
+
+let WARDS = [];
+let selectedWard = null;
+let currentView = 'grid';
+let scatterChart = null;
+let trendChart = null;
+let dataSource = { nomis: 'cached', imd: 'cached' };
+
+const COLOR_RAMP = ['#2d5a1a','#3f6e1a','#627a1a','#8a7a1a','#b06820','#c85020','#d63a18','#e02a10','#e81808','#f00000'];
+function decileColor(d) { return COLOR_RAMP[Math.max(0,Math.min(9,(d||1)-1))]; }
+
+// ═══════════════════════════════════════════════════════════════
+// NORMALISE + COMPUTE COMPOSITES
+// ═══════════════════════════════════════════════════════════════
+
+function normaliseAndScore(wards) {
+  const maxIMD = Math.max(...wards.map(w => w.imd_employment_score));
+  const maxCC  = Math.max(...wards.map(w => w.claimant_rate));
+  const maxIA  = Math.max(...wards.map(w => w.inactivity_sick_pct));
+  const minIMD = Math.min(...wards.map(w => w.imd_employment_score));
+  const minCC  = Math.min(...wards.map(w => w.claimant_rate));
+  const minIA  = Math.min(...wards.map(w => w.inactivity_sick_pct));
+
+  wards.forEach(w => {
+    w.imd_norm = maxIMD > minIMD ? (w.imd_employment_score - minIMD) / (maxIMD - minIMD) : 0;
+    w.cc_norm  = maxCC  > minCC  ? (w.claimant_rate - minCC) / (maxCC - minCC) : 0;
+    w.ia_norm  = maxIA  > minIA  ? (w.inactivity_sick_pct - minIA) / (maxIA - minIA) : 0;
+    w.composite = w.imd_norm * 0.40 + w.cc_norm * 0.35 + w.ia_norm * 0.25;
+  });
+
+  // Assign deciles 1–10 by rank
+  const sorted = [...wards].sort((a,b) => a.composite - b.composite);
+  const n = sorted.length;
+  sorted.forEach((w, i) => {
+    w.composite_decile = Math.min(10, Math.ceil(((i + 1) / n) * 10));
+  });
+  return wards;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOMIS FETCH — NM_162_1 Claimant Count by Ward
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchNOMIS(logId) {
+  const url = 'https://www.nomisweb.co.uk/api/v01/dataset/NM_162_1.data.json' +
+    '?geography=1946157186TYPE448&date=latest&gender=0&age=0&measure=2&measures=20100';
+
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error(`NOMIS HTTP ${res.status}`);
+  const json = await res.json();
+
+  // Response shape: { obs: [ { geography: {geogcode, description}, obs_value: {value} }, ... ] }
+  const obs = json.obs || json.data || [];
+  if (!obs.length) throw new Error('NOMIS returned empty dataset');
+
+  const map = {};
+  obs.forEach(o => {
+    const code = o.geography?.geogcode || o.geography?.code;
+    const val  = o.obs_value?.value ?? o.value;
+    if (code && val !== undefined && val !== null) {
+      map[code] = parseFloat(val);
+    }
+  });
+
+  // Find the date label from first obs
+  const dateLabel = obs[0]?.date?.description || obs[0]?.date?.label || 'latest';
+  return { map, dateLabel, count: Object.keys(map).length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IMD FETCH — Birmingham City Observatory OpenDataSoft
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchIMD(logId) {
+  const BASE = 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/' +
+    'imd-indices-of-deprivation-2025-wmca-lsoa-2021/records';
+  const LIMIT = 100;
+  let offset = 0;
+  let allRecords = [];
+  let total = null;
+
+  while (true) {
+    const url = `${BASE}?limit=${LIMIT}&offset=${offset}&where=lad22cd%3D'E08000025'`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`City Observatory HTTP ${res.status}`);
+    const json = await res.json();
+
+    if (total === null) total = json.total_count ?? json.nhits ?? json.records?.length ?? 0;
+    const records = json.results ?? json.records ?? [];
+    if (!records.length) break;
+
+    allRecords = allRecords.concat(records);
+    offset += LIMIT;
+
+    // Update spinner with page progress
+    const pct = total > 0 ? Math.round((allRecords.length / total) * 100) : '?';
+    updateLine(logId, `${pct}%`, 't-badge-warn',
+      `IMD 2025 — fetching page ${Math.ceil(offset/LIMIT)} of ${Math.ceil(total/LIMIT)} <span class="warn">[${allRecords.length}/${total} LSOAs]</span>`);
+
+    if (allRecords.length >= total) break;
+  }
+
+  if (!allRecords.length) throw new Error('IMD API returned no records');
+
+  // Field name variants across API versions
+  const getField = (r, ...keys) => {
+    for (const k of keys) {
+      const v = r[k] ?? r.fields?.[k];
+      if (v !== undefined && v !== null) return v;
+    }
+    return null;
+  };
+
+  // Aggregate LSOA scores → ward averages
+  const wardBuckets = {};
+  allRecords.forEach(r => {
+    const wardCode = getField(r, 'ward22cd', 'ward_code', 'wardcd', 'ward21cd');
+    const empScore = getField(r, 'employment_score', 'employment_domain_score', 'emp_score',
+                               'ind_emp_score', 'employment_sub_domain_score');
+    if (!wardCode || empScore === null) return;
+
+    if (!wardBuckets[wardCode]) wardBuckets[wardCode] = { scores: [], name: null };
+    wardBuckets[wardCode].scores.push(parseFloat(empScore));
+
+    if (!wardBuckets[wardCode].name) {
+      wardBuckets[wardCode].name = getField(r, 'ward22nm', 'ward_name', 'wardnm');
+    }
+  });
+
+  // Mean per ward
+  const map = {};
+  Object.entries(wardBuckets).forEach(([code, v]) => {
+    if (v.scores.length > 0) {
+      map[code] = v.scores.reduce((a,b) => a+b, 0) / v.scores.length;
+    }
+  });
+
+  return { map, lsoaCount: allRecords.length, wardCount: Object.keys(map).length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MERGE LIVE + FALLBACK
+// ═══════════════════════════════════════════════════════════════
+
+function mergeData(nomisMap, imdMap) {
+  // Start from fallback to ensure all 68 wards present with trend data
+  const merged = FALLBACK_WARDS.map(fw => {
+    const w = { ...fw };
+
+    // Overwrite claimant rate if NOMIS returned it
+    if (nomisMap && nomisMap[fw.ward_code] !== undefined) {
+      w.claimant_rate = parseFloat(nomisMap[fw.ward_code].toFixed(1));
+      // Update last value in trend array too
+      if (w.trend_12m && w.trend_12m.length > 0) {
+        w.trend_12m = [...w.trend_12m.slice(0, -1), w.claimant_rate];
+      }
+    }
+
+    // Overwrite IMD employment score if City Observatory returned it
+    if (imdMap && imdMap[fw.ward_code] !== undefined) {
+      w.imd_employment_score = parseFloat(imdMap[fw.ward_code].toFixed(4));
+    }
+
+    return w;
+  });
+
+  return normaliseAndScore(merged);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN INIT — orchestrate loading
+// ═══════════════════════════════════════════════════════════════
+
+async function initDashboard() {
+  // Type out ASCII header
+  await typeAscii(ASCII_ART, document.getElementById('ascii-art'), 0);
+  await sleep(200);
+  setProgress(5);
+
+  addLogLine('boot', 'INIT', 't-badge-info', 'Employment Disadvantage Dashboard v2.1 — pipeline starting');
+  await sleep(250);
+
+  // ── Step 1: NOMIS ──────────────────────────────
+  addLogLine('nomis', '⠋', 't-badge-spin',
+    'Connecting to <strong>NOMIS NM_162_1</strong> — claimant count by ward (Birmingham TYPE448)…');
+  startSpinner('nomis');
+  setProgress(15);
+
+  let nomisMap = null;
+  let nomisDate = 'Jan 2026';
+  try {
+    const result = await fetchNOMIS('nomis');
+    nomisMap = result.map;
+    nomisDate = result.dateLabel;
+    clearSpinner('nomis');
+    updateLine('nomis', '✓ LIVE', 't-badge-ok',
+      `NOMIS — <span class="hi">${result.count} wards</span> · claimant rate % · <strong>${nomisDate}</strong>`);
+    dataSource.nomis = 'live';
+    setProgress(45);
+  } catch (err) {
+    clearSpinner('nomis');
+    updateLine('nomis', '⚠ FALLBACK', 't-badge-warn',
+      `NOMIS fetch failed: <span class="warn">${err.message}</span> — using embedded Jan 2026 data`);
+    await sleep(300);
+  }
+
+  // ── Step 2: IMD City Observatory ───────────────
+  addLogLine('imd', '⠋', 't-badge-spin',
+    'Connecting to <strong>Birmingham City Observatory</strong> — IMD 2025 LSOA dataset…');
+  startSpinner('imd');
+  setProgress(50);
+
+  let imdMap = null;
+  try {
+    const result = await fetchIMD('imd');
+    imdMap = result.map;
+    clearSpinner('imd');
+    updateLine('imd', '✓ LIVE', 't-badge-ok',
+      `IMD 2025 — <span class="hi">${result.lsoaCount} LSOAs</span> aggregated to <span class="hi">${result.wardCount} wards</span>`);
+    dataSource.imd = 'live';
+    setProgress(80);
+  } catch (err) {
+    clearSpinner('imd');
+    updateLine('imd', '⚠ FALLBACK', 't-badge-warn',
+      `IMD fetch failed: <span class="warn">${err.message}</span> — using embedded IMD 2025 scores`);
+    await sleep(300);
+  }
+
+  // ── Step 3: Merge + normalise ──────────────────
+  addLogLine('merge', '⠋', 't-badge-spin', 'Merging datasets — normalising scores, computing deciles…');
+  startSpinner('merge');
+  setProgress(88);
+  await sleep(300);
+
+  WARDS = mergeData(nomisMap, imdMap);
+
+  clearSpinner('merge');
+  const liveCount = (nomisMap ? 1 : 0) + (imdMap ? 1 : 0);
+  updateLine('merge', '✓ READY', 't-badge-ok',
+    `${WARDS.length} wards · composite scores normalised · <span class="hi">${liveCount}/2 live layers</span>`);
+  setProgress(95);
+  await sleep(200);
+
+  // ── Step 4: Census note ────────────────────────
+  addLogLine('census', 'INFO', 't-badge-info',
+    'Census 2021 inactivity (long-term sick) — static layer, no live endpoint available');
+
+  // ── Done ───────────────────────────────────────
+  setProgress(100);
+  await sleep(400);
+
+  addLogLine('done', '▶ RUN', 't-badge-ok',
+    `Rendering dashboard <span class="hi">→</span><span class="t-cursor"></span>`);
+  await sleep(600);
+
+  // Update header badges
+  document.getElementById('badge-nomis').innerHTML =
+    `NOMIS ${nomisDate} <span class="dot ${dataSource.nomis === 'live' ? 'dot-live' : 'dot-cached'}">●</span>`;
+  document.getElementById('badge-imd').innerHTML =
+    `IMD 2025 <span class="dot ${dataSource.imd === 'live' ? 'dot-live' : 'dot-cached'}">●</span>`;
+  document.getElementById('badge-census').innerHTML =
+    `Census 2021 <span class="dot dot-cached">●</span>`;
+
+  // Dismiss overlay
+  const overlay = document.getElementById('loading-overlay');
+  overlay.classList.add('fade-out');
+  document.getElementById('dashboard').style.display = 'block';
+  setTimeout(() => overlay.style.display = 'none', 520);
+
+  // Render
+  populateStats();
+  renderGrid();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════════════
+// RE-FETCH (refresh button)
+// ═══════════════════════════════════════════════════════════════
+
+async function reloadData() {
+  const btn = document.querySelector('.refresh-btn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+
+  // Reset log & progress
+  document.getElementById('t-log').innerHTML = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('ascii-art').textContent = '';
+
+  // Re-show overlay
+  const overlay = document.getElementById('loading-overlay');
+  overlay.style.display = '';
+  overlay.classList.remove('fade-out');
+  overlay.style.opacity = '1';
+
+  document.getElementById('dashboard').style.display = 'none';
+  selectedWard = null;
+  if (scatterChart) { scatterChart.destroy(); scatterChart = null; }
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+
+  await initDashboard();
+  btn.classList.remove('spinning');
+  btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ERROR TOAST
+// ═══════════════════════════════════════════════════════════════
+
+function showError(msg) {
+  const t = document.getElementById('error-toast');
+  document.getElementById('error-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════
+
+function populateStats() {
+  const rates = WARDS.map(w => w.claimant_rate);
+  const avg = (rates.reduce((a,b)=>a+b,0)/rates.length).toFixed(1);
+  const sorted = [...WARDS].sort((a,b)=>b.claimant_rate-a.claimant_rate);
+
+  document.getElementById('avg-claimant').textContent = avg + '%';
+  document.getElementById('highest-ward').textContent = sorted[0].ward_name;
+  document.getElementById('highest-rate').textContent = sorted[0].claimant_rate + '% claimant rate';
+  document.getElementById('lowest-ward').textContent = sorted[sorted.length-1].ward_name;
+  document.getElementById('lowest-rate').textContent = sorted[sorted.length-1].claimant_rate + '% claimant rate';
+  document.getElementById('deprived-count').textContent = WARDS.filter(w=>w.composite_decile>=9).length;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRID VIEW
+// ═══════════════════════════════════════════════════════════════
+
+function renderGrid() {
+  const container = document.getElementById('view-grid');
+  const wardsSorted = [...WARDS].sort((a,b)=>b.composite-a.composite);
+  container.innerHTML = wardsSorted.map(w => {
+    const c = decileColor(w.composite_decile);
+    return `<div class="ward-card" id="wcard-${w.ward_code}" onclick="selectWard('${w.ward_code}')"
+      style="background:${c}22;border-color:${c}44">
+      <div class="wc-name" style="color:${w.composite_decile>=7?'#f0e8e0':'var(--text)'}">${w.ward_name}</div>
+      <div class="wc-score" style="color:${w.composite_decile>=9?'#ff8060':w.composite_decile<=2?'#80c860':'var(--text)'}">${(w.composite*100).toFixed(0)}</div>
+      <div class="wc-label" style="color:${c}cc">composite score</div>
+      <div class="wc-bars">
+        <div class="wc-bar-row"><div class="wc-bar-dot" style="background:#4f9de8"></div><div class="wc-bar-track"><div class="wc-bar-fill" style="width:${w.imd_norm*100}%;background:#4f9de8"></div></div></div>
+        <div class="wc-bar-row"><div class="wc-bar-dot" style="background:#f59e0b"></div><div class="wc-bar-track"><div class="wc-bar-fill" style="width:${w.cc_norm*100}%;background:#f59e0b"></div></div></div>
+        <div class="wc-bar-row"><div class="wc-bar-dot" style="background:#a78bfa"></div><div class="wc-bar-track"><div class="wc-bar-fill" style="width:${w.ia_norm*100}%;background:#a78bfa"></div></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIST VIEW
+// ═══════════════════════════════════════════════════════════════
+
+function renderList() {
+  const container = document.getElementById('list-body');
+  const wardsSorted = [...WARDS].sort((a,b)=>b.composite-a.composite);
+  container.innerHTML = wardsSorted.map((w,i) => `
+    <div class="ward-row ${selectedWard?.ward_code===w.ward_code?'selected':''}" onclick="selectWard('${w.ward_code}')">
+      <span class="rank-num">${i+1}</span>
+      <span class="ward-name-cell">${w.ward_name}</span>
+      <span class="metric-cell">${(w.imd_employment_score*100).toFixed(1)}%</span>
+      <span class="metric-cell">${w.claimant_rate}%</span>
+      <span class="metric-cell">${w.inactivity_sick_pct}%</span>
+      <div class="decile-bar-cell">
+        <div class="decile-bar" style="width:${w.composite*60+4}px;background:${decileColor(w.composite_decile)}"></div>
+        <span class="decile-text">${(w.composite*100).toFixed(0)}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCATTER VIEW
+// ═══════════════════════════════════════════════════════════════
+
+function renderScatter() {
+  if (scatterChart) { scatterChart.destroy(); scatterChart = null; }
+  const ctx = document.getElementById('scatter-chart').getContext('2d');
+  const data = WARDS.map(w => ({
+    x: w.imd_employment_score * 100,
+    y: w.claimant_rate,
+    r: Math.max(4, w.inactivity_sick_pct * 0.6),
+    ward: w
+  }));
+  scatterChart = new Chart(ctx, {
+    type: 'bubble',
+    data: {
+      datasets: [{ data,
+        backgroundColor: data.map(d => decileColor(d.ward.composite_decile) + 'cc'),
+        borderColor: data.map(d => decileColor(d.ward.composite_decile)),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick: (e, els) => { if (els.length > 0) selectWard(data[els[0].index].ward.ward_code); },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => {
+            const w = ctx.raw.ward;
+            return [`${w.ward_name}`, `IMD: ${(w.imd_employment_score*100).toFixed(1)}%`,
+                    `Claimant: ${w.claimant_rate}%`, `Inactivity: ${w.inactivity_sick_pct}%`];
+          }},
+          backgroundColor: '#1e2535', borderColor: '#2d3748', borderWidth: 1,
+          titleColor: '#e8eaf0', bodyColor: '#7a8499', padding: 10
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'IMD Employment Score (%)', color: '#7a8499', font: { size: 11, family: 'DM Mono' } },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#7a8499', font: { size: 10, family: 'DM Mono' }, callback: v => v + '%' }
+        },
+        y: {
+          title: { display: true, text: 'Claimant Rate (%)', color: '#7a8499', font: { size: 11, family: 'DM Mono' } },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#7a8499', font: { size: 10, family: 'DM Mono' }, callback: v => v + '%' }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════════
+
+function setView(v, e) {
+  currentView = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  if (e?.target) e.target.classList.add('active');
+  document.getElementById('view-grid').style.display    = v==='grid'    ? 'grid'  : 'none';
+  document.getElementById('view-list').style.display    = v==='list'    ? 'block' : 'none';
+  document.getElementById('view-scatter').style.display = v==='scatter' ? 'block' : 'none';
+  const titles = {
+    grid: 'Ward grid — composite employment disadvantage score',
+    list: 'Ward table — sorted by composite score',
+    scatter: 'Scatter — structural deprivation vs current claimant rate'
+  };
+  document.getElementById('panel-title').textContent = titles[v];
+  if (v === 'scatter') renderScatter();
+  if (v === 'list') renderList();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WARD SELECTION + DETAIL PANEL
+// ═══════════════════════════════════════════════════════════════
+
+function selectWard(code) {
+  selectedWard = WARDS.find(w => w.ward_code === code);
+  if (!selectedWard) return;
+  document.querySelectorAll('.ward-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('wcard-' + code);
+  if (card) card.classList.add('selected');
+  if (currentView === 'list') renderList();
+  renderDetail();
+}
+
+function renderDetail() {
+  const w = selectedWard;
+  if (!w) return;
+  const c = decileColor(w.composite_decile);
+  const avgCC  = (WARDS.reduce((s,x)=>s+x.claimant_rate,0)/WARDS.length).toFixed(1);
+  const avgIMD = (WARDS.reduce((s,x)=>s+x.imd_employment_score,0)/WARDS.length*100).toFixed(1);
+
+  const medIMD = 0.22, medCC = 6.5;
+  let quadrant, qdesc;
+  if      (w.imd_employment_score <  medIMD && w.claimant_rate <  medCC) { quadrant='Least disadvantaged'; qdesc='Below-average structural deprivation and below-average current unemployment.'; }
+  else if (w.imd_employment_score >= medIMD && w.claimant_rate >= medCC) { quadrant='Compound disadvantage'; qdesc='High structural deprivation and high current unemployment — greatest intervention need.'; }
+  else if (w.imd_employment_score >= medIMD && w.claimant_rate <  medCC) { quadrant='Structural but recovering'; qdesc='Historically deprived but current claimant rate is relatively lower.'; }
+  else                                                                    { quadrant='Recent decline'; qdesc='Lower structural deprivation but current unemployment is above average.'; }
+
+  const liveTag = dataSource.nomis === 'live'
+    ? `<span style="font-size:9px;font-family:var(--mono);color:#4ade80;background:rgba(74,222,128,0.1);padding:1px 5px;border-radius:3px;border:1px solid rgba(74,222,128,0.25);margin-left:6px">LIVE</span>`
+    : `<span style="font-size:9px;font-family:var(--mono);color:#f59e0b;background:rgba(245,158,11,0.1);padding:1px 5px;border-radius:3px;border:1px solid rgba(245,158,11,0.25);margin-left:6px">CACHED</span>`;
+
+  document.getElementById('right-panel').innerHTML = `
+    <div class="detail-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="detail-ward-name">${w.ward_name}</div>
+          <div class="detail-sub">${w.ward_code} · Composite decile ${w.composite_decile}/10</div>
+        </div>
+        <button onclick="document.getElementById('right-panel').innerHTML='<div class=right-empty><p>Select a ward</p></div>'"
+          style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0">×</button>
+      </div>
+      <div class="detail-score-row">
+        <div class="detail-score-chip">
+          <div class="dsc-label">IMD 2025</div>
+          <div class="dsc-value" style="color:#4f9de8">${(w.imd_employment_score*100).toFixed(1)}%</div>
+          <div class="dsc-sub">excl. from labour market</div>
+        </div>
+        <div class="detail-score-chip">
+          <div class="dsc-label">Claimant rate ${liveTag}</div>
+          <div class="dsc-value" style="color:#f59e0b">${w.claimant_rate}%</div>
+          <div class="dsc-sub">Bham avg ${avgCC}%</div>
+        </div>
+        <div class="detail-score-chip">
+          <div class="dsc-label">Inactivity</div>
+          <div class="dsc-value" style="color:#a78bfa">${w.inactivity_sick_pct}%</div>
+          <div class="dsc-sub">long-term sick (Census 2021)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Claimant count trend — 12 months</div>
+      <div class="detail-chart-wrap"><canvas id="trend-chart"></canvas></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Score breakdown vs Birmingham average</div>
+      <div class="meter-row">
+        <div class="meter-item">
+          <span class="meter-label">IMD employment</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${w.imd_norm*100}%;background:#4f9de8"></div></div>
+          <span class="meter-val">${(w.imd_employment_score*100).toFixed(1)}%</span>
+        </div>
+        <div class="meter-item">
+          <span class="meter-label" style="color:var(--muted);font-size:11px">Birmingham avg</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${(parseFloat(avgIMD)/38.1)*100}%;background:#4f9de844"></div></div>
+          <span class="meter-val" style="color:var(--muted)">${avgIMD}%</span>
+        </div>
+        <div class="meter-item">
+          <span class="meter-label">Claimant rate</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${w.cc_norm*100}%;background:#f59e0b"></div></div>
+          <span class="meter-val">${w.claimant_rate}%</span>
+        </div>
+        <div class="meter-item">
+          <span class="meter-label" style="color:var(--muted);font-size:11px">Birmingham avg</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${(parseFloat(avgCC)/11.1)*100}%;background:#f59e0b44"></div></div>
+          <span class="meter-val" style="color:var(--muted)">${avgCC}%</span>
+        </div>
+        <div class="meter-item">
+          <span class="meter-label">Inactivity (sick)</span>
+          <div class="meter-track"><div class="meter-fill" style="width:${w.ia_norm*100}%;background:#a78bfa"></div></div>
+          <span class="meter-val">${w.inactivity_sick_pct}%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Quadrant analysis</div>
+      <div style="background:${c}11;border:1px solid ${c}33;border-radius:8px;padding:10px 12px">
+        <div style="font-size:10px;font-family:var(--mono);color:${c};margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">${quadrant}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">${qdesc}</div>
+      </div>
+    </div>
+
+    <div class="detail-section" style="border-bottom:none">
+      <div class="detail-section-title">Composite score weights</div>
+      <div style="font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono)">
+        IMD employment × 0.40 = <span style="color:#4f9de8">${(w.imd_norm*0.4).toFixed(3)}</span><br>
+        Claimant rate  × 0.35 = <span style="color:#f59e0b">${(w.cc_norm*0.35).toFixed(3)}</span><br>
+        Inactivity     × 0.25 = <span style="color:#a78bfa">${(w.ia_norm*0.25).toFixed(3)}</span><br>
+        <span style="border-top:1px solid var(--border);display:block;padding-top:4px;margin-top:2px">
+          Composite = <span style="color:var(--text)">${w.composite.toFixed(3)}</span> → decile
+          <span style="color:${c};font-weight:600">${w.composite_decile}</span>
+        </span>
+      </div>
+    </div>`;
+
+  // Trend chart
+  requestAnimationFrame(() => {
+    const tCtx = document.getElementById('trend-chart');
+    if (!tCtx) return;
+    if (trendChart) trendChart.destroy();
+    const avgLine = Array(12).fill(parseFloat(avgCC));
+    trendChart = new Chart(tCtx.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: w.trend_months,
+        datasets: [
+          { label: w.ward_name, data: w.trend_12m,
+            borderColor: '#f59e0b', backgroundColor: '#f59e0b22',
+            fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2 },
+          { label: 'Bham avg', data: avgLine,
+            borderColor: '#4f9de866', borderDash: [4,3],
+            fill: false, tension: 0, pointRadius: 0, borderWidth: 1.5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#7a8499', font: { size: 10, family: 'DM Mono' }, boxWidth: 12, padding: 10 } },
+          tooltip: {
+            backgroundColor: '#1e2535', borderColor: '#2d3748', borderWidth: 1,
+            titleColor: '#e8eaf0', bodyColor: '#7a8499', padding: 8,
+            callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a8499', font: { size: 9, family: 'DM Mono' }, maxRotation: 0 } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a8499', font: { size: 10, family: 'DM Mono' }, callback: v => v+'%' } }
+        }
+      }
+    });
+  });
+}
+
+// ── Kick off ──
+initDashboard().catch(err => {
+  console.error('Dashboard init error:', err);
+  // Even if something goes very wrong, show the dashboard with fallback data
+  WARDS = normaliseAndScore([...FALLBACK_WARDS]);
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  populateStats();
+  renderGrid();
+  showError('Pipeline error — showing cached data. ' + err.message);
+});
+</script>
+</body>
+</html>
