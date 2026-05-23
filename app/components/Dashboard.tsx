@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import type { Ward, DataSources, DataMeta } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
@@ -10,8 +10,13 @@ import LabourScatter from './tabs/LabourScatter';
 import EconomicMatrix from './tabs/EconomicMatrix';
 import Compare from './tabs/Compare';
 import DetailPanel from './detail/DetailPanel';
+import CrimeDetailPanel from './detail/CrimeDetailPanel';
+import CrimeTable from './tabs/crime/CrimeTable';
+import CrimeGrid from './tabs/crime/CrimeGrid';
+import OzzyView from './OzzyView';
 
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
+const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
 const BHAM_BANNER =
   ` ____    ___   ____   __  __   ___   _   _    ____   _   _    _    __  __ \n` +
@@ -20,16 +25,9 @@ const BHAM_BANNER =
   `| |_) |  | |  |  _ < | |  | |  | |  | |\\  | | |_| | |  _  |/ ___ \\| |  | |\n` +
   `|____/  |___| |_| \\_\\|_|  |_| |___| |_| \\_|  \\____| |_| |_/_/   \\_\\_|  |_|`;
 
-type View = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
-
-const VIEW_TITLES: Record<View, string> = {
-  grid: 'Ward grid — composite employment disadvantage',
-  list: 'Ward table — sorted by composite score',
-  scatter: 'Labour market scatter — IMD vs current claimant rate',
-  matrix: 'Economic matrix — workplace GVA vs resident deprivation',
-  map: 'Choropleth map — composite deprivation by ward',
-  compare: 'Compare — pin up to 2 wards side by side',
-};
+type View = 'ozzy' | 'employment' | 'crime';
+type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
+type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 
 interface Props {
   wards: Ward[];
@@ -40,12 +38,27 @@ interface Props {
 
 export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<View>('grid');
+  const [view, setView] = useState<View>('ozzy');
+  const [empSub, setEmpSub] = useState<EmpSub>('grid');
+  const [crimeSub, setCrimeSub] = useState<CrimeSub>('crime-table');
   const [selected, setSelected] = useState<Ward | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
   const [showSources, setShowSources] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const bannerRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    try {
+      const h = localStorage.getItem('ozzy_history_v2');
+      if (h) setRecentHistory((JSON.parse(h) as { q: string }[]).slice(0, 12).map(x => x.q));
+      const lev = localStorage.getItem('lastEmploymentView') as EmpSub | null;
+      if (lev) setEmpSub(lev);
+      const lcv = localStorage.getItem('lastCrimeView') as CrimeSub | null;
+      if (lcv) setCrimeSub(lcv);
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     const el = bannerRef.current;
@@ -68,6 +81,19 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
     return () => clearInterval(tick);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
+        if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
+        if ((e.key === 'm' || e.key === 'M') && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+          setSidebarOpen(o => !o);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [sidebarOpen]);
+
   const togglePin = (code: string) => {
     setPinnedWards(prev => {
       const idx = prev.indexOf(code);
@@ -77,19 +103,58 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
     });
   };
 
+  const handleAddHistory = useCallback((q: string) => {
+    setRecentHistory(prev => {
+      const next = [q, ...prev.filter(h => h !== q)].slice(0, 12);
+      try {
+        const full: { q: string; ts: number }[] = next.map(x => ({ q: x, ts: Date.now() }));
+        localStorage.setItem('ozzy_history_v2', JSON.stringify(full));
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const navigateFromHistory = useCallback((q: string) => {
+    setSidebarOpen(false);
+    setView('ozzy');
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>('.ozzy-input');
+      if (input) { input.value = q; input.focus(); }
+    }, 60);
+  }, []);
+
+  const setEmpSubPersist = (s: EmpSub) => {
+    setEmpSub(s);
+    try { localStorage.setItem('lastEmploymentView', s); } catch { /* ignore */ }
+  };
+  const setCrimeSubPersist = (s: CrimeSub) => {
+    setCrimeSub(s);
+    try { localStorage.setItem('lastCrimeView', s); } catch { /* ignore */ }
+  };
+
+  const handleOpenView = useCallback((v: string) => {
+    if (v === 'crime') { setView('crime'); setSidebarOpen(false); }
+    else if (v === 'matrix') { setView('employment'); setEmpSub('matrix'); setSidebarOpen(false); }
+    else if (v === 'employment') { setView('employment'); setSidebarOpen(false); }
+  }, []);
+
   const avg = (wards.reduce((s, w) => s + w.claimant_rate, 0) / wards.length).toFixed(1);
   const sorted = [...wards].sort((a, b) => b.claimant_rate - a.claimant_rate);
   const depCount = wards.filter(w => w.composite_decile >= 9).length;
+  const avgCrime = (wards.reduce((s, w) => s + w.crime_rate_per_1000, 0) / wards.length).toFixed(1);
+  const sortedCrime = [...wards].sort((a, b) => b.crime_rate_per_1000 - a.crime_rate_per_1000);
+  const isOzzy = view === 'ozzy';
+  const isCrime = view === 'crime';
 
   return (
     <>
       {/* Loading overlay */}
-      <div id="overlay" className={ready ? 'fade' : ''} style={{ display: ready ? undefined : undefined }}>
+      <div id="overlay" className={ready ? 'fade' : ''}>
         <div className="scan-line" />
         <pre className="bham-mega" ref={bannerRef} id="bham-mega" />
         <div className="load-meta">
           <div className="load-headline">Initialising the intelligence pipeline</div>
-          <div className="load-sub">Birmingham City Council · Employment Deprivation v3.0</div>
+          <div className="load-sub">Birmingham City Council · Employment Deprivation v4.0</div>
           <div className="t-log">
             <div className="t-line vis">
               <span className="t-ts">—</span>
@@ -101,8 +166,80 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
         </div>
       </div>
 
-      {/* Error toast placeholder */}
       <div className="error-toast" id="error-toast"><span>⚠</span><span id="etxt" /></div>
+
+      {/* Sidebar backdrop */}
+      <div className={`sidebar-backdrop${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen(false)} />
+
+      {/* Sidebar */}
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`} aria-hidden={!sidebarOpen}>
+        <div className="sidebar-hdr">
+          <span className="sidebar-ttl">Menu</span>
+          <button className="sidebar-x" onClick={() => setSidebarOpen(false)} aria-label="Close menu">×</button>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-section-ttl">Ozzy</div>
+          <button
+            className={`side-nav-btn${isOzzy ? ' active' : ''}`}
+            onClick={() => { setView('ozzy'); setSidebarOpen(false); }}
+          >
+            <span className="side-nav-glyph">O</span> Conversation
+          </button>
+          <button
+            className="side-nav-btn"
+            onClick={() => {
+              try { localStorage.removeItem('ozzy_conv_v2'); } catch { /* ignore */ }
+              setView('ozzy');
+              setSidebarOpen(false);
+              window.location.reload();
+            }}
+          >
+            <span className="side-nav-glyph">+</span> New conversation
+          </button>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-section-ttl">Recent questions</div>
+          <div className="sidebar-history-list">
+            {recentHistory.length === 0
+              ? <div className="sidebar-history-empty">no history yet</div>
+              : recentHistory.slice(0, 2).map((q, i) => (
+                <button key={i} className="sidebar-history-item" onClick={() => navigateFromHistory(q)}>
+                  {q}
+                </button>
+              ))
+            }
+            {recentHistory.length > 2 && (
+              <button className="sidebar-history-more" onClick={() => {
+                recentHistory.slice(2).forEach(q => {
+                  const btn = document.createElement('button');
+                  btn.className = 'sidebar-history-item';
+                  btn.textContent = q;
+                  btn.onclick = () => navigateFromHistory(q);
+                });
+              }}>
+                + {recentHistory.length - 2} more
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="sidebar-section">
+          <div className="sidebar-section-ttl">Dashboards</div>
+          <button
+            className={`side-nav-btn${view === 'employment' ? ' active' : ''}`}
+            onClick={() => { setView('employment'); setSidebarOpen(false); }}
+          >
+            <span className="side-nav-glyph">▦</span> Employment Deprivation
+          </button>
+          <button
+            className={`side-nav-btn${isCrime ? ' active' : ''}`}
+            onClick={() => { setView('crime'); setSidebarOpen(false); }}
+          >
+            <span className="side-nav-glyph">⚠</span> Crime Dashboard
+            {dsrc.crime === 'live' && <span className="side-live-dot">●</span>}
+          </button>
+        </div>
+        <div className="sidebar-foot">F·O·R·W·A·R·D</div>
+      </aside>
 
       {/* Dashboard */}
       <div className="wrap" style={{ display: ready ? 'flex' : 'none' }}>
@@ -110,11 +247,14 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
         {/* Header */}
         <div className="hdr" style={{ position: 'relative' }}>
           <div className="hdr-brand">
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(o => !o)} aria-label="Open menu">
+              <span className="st-lines"><span /><span /><span /></span>
+            </button>
             <div className="bcc-badge" title="Birmingham City Council">
               <span>▶ FORWARD</span>B·C·C
             </div>
             <div>
-              <div className="hdr-title">Birmingham — Employment Deprivation</div>
+              <div className="hdr-title">Birmingham — Ozzy</div>
               <div className="hdr-sub">68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022</div>
             </div>
           </div>
@@ -125,6 +265,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
             </span>
             <span className="dsbadge" title={dsrc.nomis === 'live' ? `NOMIS ${nomisDate} — fetched live` : 'NOMIS embedded Jan 2026 cache'}>
               NOMIS {nomisDate} <span className={dsrc.nomis === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
+            </span>
+            <span className="dsbadge" title={dsrc.crime === 'live' ? 'WMP Crime — live from City Observatory' : 'Crime rates modelled from composite score'}>
+              Crime <span className={dsrc.crime === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
             </span>
             <span className="dsbadge" title={dsrc.gva === 'live' ? 'GVA 2022 — live, per-head computed' : 'GVA synthesised from ward bands'}>
               GVA 2022 <span className={dsrc.gva === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
@@ -166,11 +309,11 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
           )}
         </div>
 
-        <div className="body">
+        <div className={`body${isOzzy ? ' ozzy-mode' : isCrime ? ' crime-mode' : ''}`}>
           <div className="lcol">
 
-            {/* Stats row */}
-            <div className="stats-row">
+            {/* Employment stats row — hidden in ozzy-mode and crime-mode via CSS */}
+            <div className="stats-row emp-stats">
               <div className="stat-card">
                 <div className="stat-lbl">Birmingham avg</div>
                 <div className="stat-val">{avg}%</div>
@@ -193,44 +336,104 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
               </div>
             </div>
 
-            {/* Tab bar + legend */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <div className="tab-bar">
-                {(['grid', 'list', 'scatter', 'matrix', 'map', 'compare'] as View[]).map(v => (
-                  <button
-                    key={v}
-                    className={`tab-btn${view === v ? ' active' : ''}`}
-                    onClick={() => setView(v)}
-                  >
-                    {v === 'list' ? 'Table' : v === 'scatter' ? 'Labour\u00a0Scatter' : v === 'matrix' ? 'Economic\u00a0Matrix' : v.charAt(0).toUpperCase() + v.slice(1)}
-                    {v === 'compare' && pinnedWards.length > 0 && (
-                      <span className="t-pin-count">{pinnedWards.length}</span>
-                    )}
+            {/* Crime stats row — visible only in crime-mode */}
+            {isCrime && (
+              <div className="stats-row crime-stats">
+                <div className="stat-card">
+                  <div className="stat-lbl">City avg crime</div>
+                  <div className="stat-val">{avgCrime}</div>
+                  <div className="stat-sub">per 1,000 pop</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-lbl">Highest ward</div>
+                  <div className="stat-val txt">{sortedCrime[0].ward_name}</div>
+                  <div className="stat-sub">{sortedCrime[0].crime_rate_per_1000.toFixed(1)}/1000</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-lbl">Lowest ward</div>
+                  <div className="stat-val txt">{sortedCrime[sortedCrime.length - 1].ward_name}</div>
+                  <div className="stat-sub">{sortedCrime[sortedCrime.length - 1].crime_rate_per_1000.toFixed(1)}/1000</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-lbl">Data source</div>
+                  <div className="stat-val txt" style={{ fontSize: 14 }}>{dsrc.crime === 'live' ? 'WMP Live' : 'Modelled'}</div>
+                  <div className="stat-sub">WMP via City Observatory</div>
+                </div>
+              </div>
+            )}
+
+            {/* Breadcrumb + legend — shown for data views */}
+            {view === 'employment' && (
+              <div className="data-view-toolbar">
+                <div className="breadcrumb">
+                  <button className="breadcrumb-back" onClick={() => setView('ozzy')}>← Ozzy</button>
+                  <span style={{ margin: '0 6px' }}>/</span>
+                  <span>Employment Deprivation</span>
+                </div>
+                <div className="legend-row">
+                  <span className="llbl" style={{ marginRight: 2 }}>Low</span>
+                  {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
+                  <span className="llbl" style={{ marginLeft: 2 }}>High disadvantage</span>
+                </div>
+              </div>
+            )}
+
+            {isCrime && (
+              <div className="data-view-toolbar">
+                <div className="breadcrumb">
+                  <button className="breadcrumb-back" onClick={() => setView('ozzy')}>← Ozzy</button>
+                  <span style={{ margin: '0 6px' }}>/</span>
+                  <span>Crime Dashboard</span>
+                </div>
+              </div>
+            )}
+
+            {/* Employment sub-tabs */}
+            {view === 'employment' && (
+              <div className="sub-tab-bar">
+                {([['grid', 'Grid'], ['list', 'Table'], ['scatter', 'Labour Scatter'], ['matrix', 'Economic Matrix'], ['map', 'Map'], ['compare', 'Compare']] as [EmpSub, string][]).map(([s, lbl]) => (
+                  <button key={s} className={`sub-tab${empSub === s ? ' active' : ''}`} onClick={() => setEmpSubPersist(s)}>
+                    {lbl}
                   </button>
                 ))}
               </div>
-              <div className="legend-row">
-                <span className="llbl" style={{ marginRight: 2 }}>Low</span>
-                {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
-                <span className="llbl" style={{ marginLeft: 2 }}>High disadvantage</span>
+            )}
+
+            {/* Crime sub-tabs */}
+            {isCrime && (
+              <div className="sub-tab-bar">
+                {([['crime-table', 'Table'], ['crime-grid', 'Grid'], ['crime-map', 'Map']] as [CrimeSub, string][]).map(([s, lbl]) => (
+                  <button key={s} className={`sub-tab${crimeSub === s ? ' active' : ''}`} onClick={() => setCrimeSubPersist(s)}>
+                    {lbl}
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
 
             {/* Panel */}
             <div className="panel" style={{ flex: 1, position: 'relative' }}>
-              <div className="panel-hdr">
-                <span className="panel-ttl">{VIEW_TITLES[view]}</span>
-                <span className="panel-hint">click a ward for detail →</span>
-              </div>
               <div className="panel-body">
-                {view === 'grid' && <GridView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'list' && <TableView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'scatter' && <LabourScatter wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'matrix' && <EconomicMatrix wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'map' && <MapView wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'compare' && <Compare wards={wards} pinnedWards={pinnedWards} onUnpin={togglePin} />}
+                {isOzzy && (
+                  <OzzyView
+                    wards={wards}
+                    dsrc={dsrc}
+                    onAddHistory={handleAddHistory}
+                    onOpenView={handleOpenView}
+                  />
+                )}
+                {/* Employment sub-views */}
+                {view === 'employment' && empSub === 'grid' && <GridView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'list' && <TableView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'scatter' && <LabourScatter wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'matrix' && <EconomicMatrix wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'map' && <MapView wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'compare' && <Compare wards={wards} pinnedWards={pinnedWards} onUnpin={togglePin} />}
+                {/* Crime sub-views */}
+                {isCrime && crimeSub === 'crime-table' && <CrimeTable wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {isCrime && crimeSub === 'crime-grid' && <CrimeGrid wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {isCrime && crimeSub === 'crime-map' && <CrimeMap wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
               </div>
-              <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
+              {!isOzzy && <div className="bham-watermark">FORWARD · BIRMINGHAM</div>}
             </div>
 
           </div>
@@ -238,16 +441,24 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
           {/* Right detail panel */}
           <div className="rcol">
             {selected ? (
-              <DetailPanel
-                ward={selected}
-                wards={wards}
-                dsrc={dsrc}
-                isPinned={pinnedWards.includes(selected.ward_code)}
-                onPin={() => togglePin(selected.ward_code)}
-                onClose={() => setSelected(null)}
-                trendMode={trendMode}
-                onTrendMode={setTrendMode}
-              />
+              isCrime ? (
+                <CrimeDetailPanel
+                  ward={selected}
+                  wards={wards}
+                  onClose={() => setSelected(null)}
+                />
+              ) : (
+                <DetailPanel
+                  ward={selected}
+                  wards={wards}
+                  dsrc={dsrc}
+                  isPinned={pinnedWards.includes(selected.ward_code)}
+                  onPin={() => togglePin(selected.ward_code)}
+                  onClose={() => setSelected(null)}
+                  trendMode={trendMode}
+                  onTrendMode={setTrendMode}
+                />
+              )
             ) : (
               <div className="r-empty">
                 <div className="ascii-ward">{`┌─────────────────────┐
@@ -258,7 +469,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate }: Props) {
  │|    (---)   |       │
  │ \\___________/       │
  └─────────────────────┘`}</div>
-                <p>Select any ward to see a detailed breakdown of employment disadvantage indicators.</p>
+                <p>Select any ward to see a detailed breakdown.</p>
                 <p style={{ fontFamily: 'var(--mono)', fontSize: 9, fontStyle: 'normal', color: 'rgba(14,15,17,.18)', letterSpacing: '.18em' }}>THE BULL OF BIRMINGHAM</p>
               </div>
             )}

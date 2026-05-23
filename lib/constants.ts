@@ -19,6 +19,25 @@ export const Q_LABELS: Record<string, string> = {
 export const MUTED = '#6b6760';
 export const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+export const CRIME_CATS: Record<string, string> = {
+  'violent-crime': 'Violent Crime',
+  'anti-social-behaviour': 'Anti-Social Behaviour',
+  'public-order': 'Public Order',
+  'vehicle-crime': 'Vehicle Crime',
+  'burglary': 'Burglary',
+  'criminal-damage-arson': 'Criminal Damage & Arson',
+  'other-theft': 'Other Theft',
+  'shoplifting': 'Shoplifting',
+  'drugs': 'Drugs',
+  'robbery': 'Robbery',
+  'theft-from-the-person': 'Theft from Person',
+  'possession-of-weapons': 'Weapons Possession',
+  'bicycle-theft': 'Bicycle Theft',
+  'other-crime': 'Other Crime',
+};
+
+export const CRIME_RAMP = ['#7a8270','#7a7a5e','#7d6e4e','#7e5e40','#7d4e36','#73402e','#683428','#5b2a23','#4d211d','#3a1a1a'];
+
 export function dc(d: number): string {
   return RAMP[Math.max(0, Math.min(9, (d || 1) - 1))];
 }

@@ -1,7 +1,11 @@
-# Project context — Birmingham Employment Dashboard
+# Project context — Birmingham Ozzy
 
 ## What this is
-A council-facing intelligence dashboard for Birmingham City Council showing employment deprivation across 68 wards. Audience: council policy officers and analysts.
+**Ozzy** — an AI-powered data voice for Birmingham City Council. A chat-first interface that reads every public dataset about the city and synthesises direct, opinionated commentary. Six data visualisation views sit behind Ozzy as the evidence locker.
+
+Named after Ozzy Osbourne — working class, blunt, globally Brummie, not what the establishment expected.
+
+Audience: council policy officers and analysts. Also WMCA board presentations.
 
 ## Visual direction (signed off — preserve)
 - **Editorial paper aesthetic.** Warm paper background (`#f5f3ee`), serif headlines (Instrument Serif), monospace data (IBM Plex Mono), no rounded corners anywhere.

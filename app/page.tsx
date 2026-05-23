@@ -1,6 +1,7 @@
 import { fetchNOMIS } from '@/lib/fetch-nomis';
 import { fetchIMD } from '@/lib/fetch-imd';
 import { fetchGVA } from '@/lib/fetch-gva';
+import { fetchCrime } from '@/lib/fetch-crime';
 import { mergeData } from '@/lib/data';
 import type { DataSources, DataMeta } from '@/lib/types';
 import Dashboard from './components/Dashboard';
@@ -8,17 +9,19 @@ import Dashboard from './components/Dashboard';
 export const revalidate = 3600;
 
 export default async function Home() {
-  const dsrc: DataSources = { nomis: 'cached', imd: 'cached', gva: 'cached' };
+  const dsrc: DataSources = { nomis: 'cached', imd: 'cached', gva: 'cached', crime: 'cached' };
   const dsmeta: DataMeta = {
     nomis: { count: null, date: null, err: null },
     imd: { lsoas: null, wards: null, err: null },
     gva: { count: null, err: null },
+    crime: { count: null, err: null },
   };
 
-  const [nomisResult, imdResult, gvaResult] = await Promise.allSettled([
+  const [nomisResult, imdResult, gvaResult, crimeResult] = await Promise.allSettled([
     fetchNOMIS(),
     fetchIMD(),
     fetchGVA(),
+    fetchCrime(),
   ]);
 
   let nMap = null, nDate = 'Jan 2026';
@@ -50,7 +53,16 @@ export default async function Home() {
     dsmeta.gva.err = String(gvaResult.reason);
   }
 
-  const wards = mergeData(nMap, iMap, gMap, popMap);
+  let crimeMap = null;
+  if (crimeResult.status === 'fulfilled') {
+    crimeMap = crimeResult.value.map;
+    dsrc.crime = 'live';
+    dsmeta.crime = { count: crimeResult.value.count, err: null };
+  } else {
+    dsmeta.crime.err = String(crimeResult.reason);
+  }
+
+  const wards = mergeData(nMap, iMap, gMap, popMap, crimeMap);
 
   return <Dashboard wards={wards} dsrc={dsrc} dsmeta={dsmeta} nomisDate={nDate} />;
 }
