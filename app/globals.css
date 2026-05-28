@@ -57,6 +57,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 .t-prog-fill{height:100%;background:var(--ink);width:0%;transition:width .4s cubic-bezier(.4,0,.2,1);}
 #overlay.fade{animation:oFade .5s ease forwards;}
 @keyframes oFade{to{opacity:0;pointer-events:none;}}
+@keyframes bullPulse{0%,100%{opacity:1;color:var(--ink)}50%{opacity:.72;color:#7d4e36}}
+@keyframes aboutFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ink),transparent);opacity:.3;animation:scan 2.4s linear infinite;z-index:3;}
 @keyframes scan{0%{top:10%}100%{top:90%}}
 
@@ -386,10 +388,11 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
   .stats-row{grid-template-columns:1fr;}
   .tab-btn{padding:7px 10px;font-size:9px;}
 }
-/* ── Crime / Ozzy mode ── */
+/* ── Mode visibility ── */
 .body.crime-mode .emp-stats{display:none!important;}
 .body.ozzy-mode .emp-stats{display:none!important;}
 .body.ozzy-mode .stats-row{display:none!important;}
+.body.edu-mode .emp-stats{display:none!important;}
 
 /* Sub-tab bar */
 .sub-tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--paper2);flex-shrink:0;}
@@ -440,6 +443,22 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 .crime-cat-bar-fill{height:100%;background:var(--q-disad);transition:width .3s;}
 .crime-cat-count{font-family:var(--mono);font-size:9px;color:var(--muted2);min-width:28px;text-align:right;}
 .d-modelled{font-family:var(--mono);font-size:9px;color:var(--muted2);font-style:italic;}
+
+/* CRIME / EDU GRID CELLS */
+.ward-cell{cursor:pointer;padding:10px 11px;border:2px solid transparent;transition:border-color .1s;min-height:68px;display:flex;flex-direction:column;justify-content:flex-end;}
+.ward-cell:hover{border-color:rgba(14,15,17,.4)!important;}
+.ward-cell.selected{border-color:var(--ink)!important;}
+.wc-name{font-family:var(--sans);font-size:10px;font-weight:500;color:rgba(255,255,255,.9);line-height:1.3;margin-bottom:4px;}
+.wc-val{font-family:var(--serif);font-size:22px;font-weight:400;line-height:1;color:#fff;letter-spacing:-.02em;}
+.wc-sub{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.65);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+
+/* Data table (shared) */
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{background:var(--paper2);border-bottom:1px solid var(--border2);padding:7px 10px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;position:sticky;top:0;z-index:2;white-space:nowrap;user-select:none;}
+.data-table th:hover{color:var(--ink);}
+.data-table td{padding:6px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10.5px;color:var(--ink);vertical-align:middle;}
+.data-table tr:hover td{background:var(--paper2);}
+.data-table tr.selected td{background:#f0ece4;}
 
 /* Sidebar new elements */
 .side-live-dot{color:var(--q-prosp);font-size:8px;margin-left:6px;}

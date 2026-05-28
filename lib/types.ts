@@ -47,3 +47,25 @@ export interface WardExtras {
   no_quals: number;
   vacancies: number;
 }
+
+export interface EducationWard {
+  ward_code: string;
+  ward_name: string;
+  qual_none: number;
+  qual_level1: number;
+  qual_level2: number;
+  qual_apprenticeship: number;
+  qual_level3: number;
+  qual_level4plus: number;
+  qual_other: number;
+  imd_edu_decile: number;
+  imd_edu_score: number;
+  edu_rank: number;
+}
+
+export type EduDataSource = 'live' | 'cached';
+
+export interface EduDataMeta {
+  quals: { wards: number | null; err: string | null; source: EduDataSource };
+  imd: { wards: number | null; err: string | null; source: EduDataSource };
+}
