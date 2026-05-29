@@ -29,6 +29,22 @@ export function normalise(wards: Ward[]): Ward[] {
   return wards;
 }
 
+// Modelled composite: youth UC claimant rate 50% + health inactivity 30% + IMD employment 20%
+export function computeNeetRisk(wards: Ward[]): void {
+  const maxY = Math.max(...wards.map(w => w.youth_claimant_rate));
+  const minY = Math.min(...wards.map(w => w.youth_claimant_rate));
+
+  wards.forEach(w => {
+    const yNorm = maxY > minY ? (w.youth_claimant_rate - minY) / (maxY - minY) : 0;
+    w.neet_risk_score = yNorm * 0.5 + w.ia_norm * 0.3 + w.imd_norm * 0.2;
+  });
+
+  const srt = [...wards].sort((a, b) => a.neet_risk_score - b.neet_risk_score);
+  srt.forEach((w, i) => {
+    w.neet_risk_decile = Math.min(10, Math.ceil(((i + 1) / srt.length) * 10));
+  });
+}
+
 export function assignQuadrants(wards: Ward[]): { gvaMed: number; depMed: number } {
   const gvaMed = median(wards.map(w => w.gva));
   const depMed = median(wards.map(w => w.imd_employment_score));

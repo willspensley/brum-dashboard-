@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta } from '@/lib/types';
+import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import GridView from './tabs/GridView';
 import TableView from './tabs/TableView';
@@ -43,6 +43,7 @@ interface Props {
   nomisDate: string;
   eduWards: EducationWard[];
   eduMeta: EduDataMeta;
+  neetData: NeetCityData;
 }
 
 const EDU_SOURCES = [
@@ -69,7 +70,7 @@ const EDU_SOURCES = [
   },
 ];
 
-export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta }: Props) {
+export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta, neetData }: Props) {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>('ozzy');
   const [empSub, setEmpSub] = useState<EmpSub>('grid');
@@ -552,7 +553,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               <div className="sub-tab-bar">
                 {([['crime-table', 'Table'], ['crime-grid', 'Grid'], ['crime-map', 'Map']] as [CrimeSub, string][]).map(([s, lbl]) => (
                   <button key={s} className={`sub-tab${crimeSub === s ? ' active' : ''}`} onClick={() => setCrimeSubPersist(s)}>
-                    {s === 'crime-table' ? 'Table' : s === 'crime-grid' ? 'Grid' : 'Map'}
+                    {lbl}
                   </button>
                 ))}
               </div>
@@ -576,6 +577,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   <OzzyView
                     wards={wards}
                     dsrc={dsrc}
+                    neetData={neetData}
                     onAddHistory={handleAddHistory}
                     onOpenView={handleOpenView}
                   />

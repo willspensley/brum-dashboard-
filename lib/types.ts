@@ -25,6 +25,10 @@ export interface Ward {
   crime_yoy_pct: number;
   crime_trend_12m: number[];
   crime_categories: Record<string, number>;
+  // NEET risk (modelled composite index)
+  youth_claimant_rate: number;
+  neet_risk_score: number;
+  neet_risk_decile: number;
 }
 
 export interface DataSources {
@@ -32,6 +36,7 @@ export interface DataSources {
   imd: 'live' | 'cached';
   gva: 'live' | 'cached';
   crime: 'live' | 'cached';
+  neet: 'live' | 'cached';
 }
 
 export interface DataMeta {
@@ -39,6 +44,14 @@ export interface DataMeta {
   imd: { lsoas: number | null; wards: number | null; err: string | null };
   gva: { count: number | null; err: string | null };
   crime: { count: number | null; err: string | null };
+  neet: { count: number | null; bham_neet_pct: number | null; bham_year: string; err: string | null };
+}
+
+export interface NeetCityData {
+  bham_neet_pct: number | null;
+  bham_year: string;
+  wmca_neet_pct: number | null;
+  source: 'live' | 'cached';
 }
 
 export interface WardExtras {

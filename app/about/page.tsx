@@ -104,7 +104,7 @@ export default function AboutPage() {
           Birmingham AI Intelligence
         </div>
         <div style={{ ...fadeStyle(320), fontFamily: 'Instrument Serif, Georgia, serif', fontStyle: 'italic', fontSize: 17, color: '#7d4e36', marginTop: 14 }}>
-          "Taking Brum into the AI era."
+          &ldquo;Taking Brum into the AI era.&rdquo;
         </div>
         <div style={{ ...fadeStyle(440), marginTop: 28, display: 'flex', justifyContent: 'center', gap: 10 }}>
           <a href="/" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
@@ -130,10 +130,10 @@ export default function AboutPage() {
                 Every city deserves to understand itself.
               </h2>
               <p style={{ fontSize: 12, color: '#6b6760', lineHeight: 1.8, margin: '0 0 14px' }}>
-                Ozzy is Birmingham's open-source AI intelligence layer — an agentic system that reads every public dataset about the city and turns raw numbers into direct, useful commentary.
+                Ozzy is Birmingham&apos;s open-source AI intelligence layer — an agentic system that reads every public dataset about the city and turns raw numbers into direct, useful commentary.
               </p>
               <p style={{ fontSize: 12, color: '#6b6760', lineHeight: 1.8, margin: '0 0 14px' }}>
-                Not a dashboard. Not a report. Not another PowerPoint. <strong style={{ color: '#0e0f11' }}>A voice.</strong> One that tells you where Birmingham is doing well, where it isn't, and what needs to happen next.
+                Not a dashboard. Not a report. Not another PowerPoint. <strong style={{ color: '#0e0f11' }}>A voice.</strong> One that tells you where Birmingham is doing well, where it isn&apos;t, and what needs to happen next.
               </p>
               <p style={{ fontSize: 12, color: '#6b6760', lineHeight: 1.8, margin: 0 }}>
                 Named after Ozzy Osbourne. Working class. Blunt. Globally Brummie. Not what the establishment expected. Exactly what Birmingham deserves.
@@ -172,7 +172,7 @@ export default function AboutPage() {
               </div>
               <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, color: '#7d4e36', marginBottom: 10 }}>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
               <p style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, color: '#d4d0c8', lineHeight: 1.75, margin: '0 0 12px' }}>
-                Claimant rate holding at 7.4% city average. Ladywood still highest at 11.1%. Sutton Four Oaks still lowest at 2.3%. The gap between them hasn't meaningfully closed in 18 months. That should bother everyone.
+                Claimant rate holding at 7.4% city average. Ladywood still highest at 11.1%. Sutton Four Oaks still lowest at 2.3%. The gap between them hasn&apos;t meaningfully closed in 18 months. That should bother everyone.
               </p>
               <p style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, color: '#d4d0c8', lineHeight: 1.75, margin: '0 0 12px' }}>
                 Education: Bordesley Green at no-quals decile 9, fourth year running. 35.8% of residents aged 16+ have no qualifications at all. Birmingham average is 24.1%. This is a structural problem, not a data blip.

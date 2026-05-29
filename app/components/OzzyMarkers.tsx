@@ -175,6 +175,26 @@ function MatrixMarker({ ward: w, wards }: { ward: Ward; wards: Ward[] }) {
   );
 }
 
+// ── NEET risk card
+function NeetRiskCard({ ward: w, wards }: { ward: Ward; wards: Ward[] }) {
+  const cityAvgYouth = (wards.reduce((s, x) => s + x.youth_claimant_rate, 0) / wards.length).toFixed(1);
+  const riskColor = w.neet_risk_decile >= 8 ? 'var(--q-disad)' : w.neet_risk_decile >= 5 ? '#7d4e36' : 'var(--q-prosp)';
+  return (
+    <div className="oz-card oz-ward-card" style={{ borderLeftColor: riskColor }}>
+      <div className="oz-card-ttl">{w.ward_name} — NEET Risk Index <span className="d-modelled">(modelled)</span></div>
+      <div className="oz-card-chips">
+        <span className="oz-chip">Risk decile: <b style={{ color: riskColor }}>{w.neet_risk_decile}/10</b></span>
+        <span className="oz-chip">Youth UC claimants: <b>{w.youth_claimant_rate}%</b> <span className="oz-chip-ref">city {cityAvgYouth}%</span></span>
+        <span className="oz-chip">Health inactivity: <b>{w.inactivity_sick_pct}%</b></span>
+        <span className="oz-chip">IMD employment: <b>{(w.imd_employment_score * 100).toFixed(1)}%</b></span>
+      </div>
+      <div className="oz-card-quad" style={{ color: riskColor }}>
+        {w.neet_risk_decile >= 8 ? 'High NEET risk' : w.neet_risk_decile >= 5 ? 'Moderate NEET risk' : 'Lower NEET risk'}
+      </div>
+    </div>
+  );
+}
+
 // ── Open CTA button
 function OpenCTA({ view, onOpenView }: { view: string; onOpenView?: (v: string) => void }) {
   return (
@@ -251,6 +271,9 @@ export function renderOzzyContent(
       } else if (type === 'trend') {
         const w = findWard(wards, args.join(':'));
         if (w) { nodes.push(<TrendMarker key={`trend-${match.index}`} ward={w} />); visualCount++; }
+      } else if (type === 'neet-risk') {
+        const w = findWard(wards, args.join(':'));
+        if (w) { nodes.push(<NeetRiskCard key={`neet-${match.index}`} ward={w} wards={wards} />); visualCount++; }
       } else if (type === 'open') {
         const view = args[0] ?? 'employment';
         nodes.push(<OpenCTA key={`open-${match.index}`} view={view} onOpenView={callbacks.onOpenView} />);
@@ -282,6 +305,7 @@ export function autoInjectMarkers(question: string, response: string): string {
   const wantsCrime = /\b(crime|safe|safer|safety|burglary|violent|theft|drugs|asb|anti.social|stop.and.search|offence|offences)\b/.test(q);
   const wantsMatrix = /\b(matrix|quadrant|position|workhorse|prosperous|commuter)\b/.test(q);
   const wantsTrend = /\b(trend|over time|getting better|getting worse|change|trajectory)\b/.test(q);
+  const wantsNeet = /\b(neet|young people|youth|16.24|16-24|not in education|inactivity|milburn|school.leaver|school leaver)\b/.test(q);
 
   const wardMentions = /\b([A-Z][a-z]+(?: [A-Z][a-z]+)*)\b/g;
   const match = response.match(wardMentions);
@@ -291,7 +315,8 @@ export function autoInjectMarkers(question: string, response: string): string {
 
   if (wantsList && wantsCrime) injections.push('{{list:top|5|crime}}');
   else if (wantsList) injections.push('{{list:top|5}}');
-  if (wantsCrime && firstWard) injections.push(`{{crime:${firstWard}}}`);
+  if (wantsNeet && firstWard) injections.push(`{{neet-risk:${firstWard}}}`);
+  else if (wantsCrime && firstWard) injections.push(`{{crime:${firstWard}}}`);
   else if (wantsMatrix && firstWard) injections.push(`{{matrix:${firstWard}}}`);
   else if (wantsTrend && firstWard) injections.push(`{{trend:${firstWard}}}`);
   else if (firstWard && !wantsList) injections.push(`{{ward:${firstWard}}}`);

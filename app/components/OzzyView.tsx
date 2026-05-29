@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Ward, DataSources } from '@/lib/types';
+import type { Ward, DataSources, NeetCityData } from '@/lib/types';
 import BullAscii from './BullAscii';
 import { renderOzzyContent, autoInjectMarkers } from './OzzyMarkers';
 
@@ -31,6 +31,7 @@ INLINE VISUALS — emit these markers inside your answer where relevant (max 4 p
 • {{trend:WardName}} — 12-month claimant trend. Use when asked about trajectories.
 • {{open:crime}} — CTA to open crime dashboard. Use at end of crime-focused answers.
 • {{open:matrix}} — CTA to open economic matrix. Use at end of economic questions.
+• {{neet-risk:WardName}} — NEET risk card for a ward. Use when discussing youth NEET risk, inactivity, or young people in a specific ward.
 
 CRITICAL: Only make claims directly supported by the data provided below. If asked about something not in the data, say so. Cite specific ward names and numbers when you make a point.`;
 
@@ -58,13 +59,34 @@ interface BriefingData {
 interface Props {
   wards: Ward[];
   dsrc: DataSources;
+  neetData: NeetCityData;
   onAddHistory: (q: string) => void;
   onOpenView?: (v: string) => void;
 }
 
 const CONV_KEY = 'ozzy_conv_v2';
 
-function buildDataBlock(wards: Ward[], dsrc: DataSources): string {
+function buildNeetBlock(wards: Ward[], neetData: NeetCityData): string {
+  const top10 = [...wards]
+    .sort((a, b) => b.neet_risk_score - a.neet_risk_score)
+    .slice(0, 10)
+    .map(w => `  ${w.ward_name}: risk score ${w.neet_risk_score.toFixed(3)}, decile ${w.neet_risk_decile}/10, youth UC ${w.youth_claimant_rate}%, health inactivity ${w.inactivity_sick_pct}%`)
+    .join('\n');
+
+  return `
+NEET CONTEXT — Young people (16–24) not in education, employment or training:
+National (Jan–Mar 2026): 1,012,000 NEET, 13.5% rate — up 89,000 YoY, up 248,000 since 2021
+Over 26% of NEET young people cite long-term sickness/disability (was 12% in 2013/14)
+Milburn Review: government investigation launched Nov 2025, interim Spring 2026, final Summer 2026
+Birmingham LA NEET (16–17 year olds, ${neetData.bham_year}): ${neetData.bham_neet_pct != null ? neetData.bham_neet_pct + '%' : 'est. 6–7%'} [${neetData.source}]
+WMCA average NEET: ${neetData.wmca_neet_pct != null ? neetData.wmca_neet_pct + '%' : 'est. 5–6%'}
+Birmingham risk factors: youngest major city (median age 33.7), 59/69 wards above-average school-aged children, 9 of top 10 child-population wards in IMD decile 1 — this is the NEET pipeline
+
+Ward NEET risk index (modelled — youth UC claimant 50% + health inactivity 30% + IMD employment 20%; not an official rate):
+${top10}`;
+}
+
+function buildDataBlock(wards: Ward[], dsrc: DataSources, neetData: NeetCityData): string {
   if (!wards.length) return '(no data loaded)';
   const sorted = [...wards].sort((a, b) => b.claimant_rate - a.claimant_rate);
   const avg = (wards.reduce((s, w) => s + w.claimant_rate, 0) / wards.length).toFixed(2);
@@ -103,8 +125,9 @@ function buildDataBlock(wards: Ward[], dsrc: DataSources): string {
     `Data source status:\n${JSON.stringify({ live, cached }, null, 2)}\n\n` +
     `Important caveats Ozzy must respect:\n${caveats.map(c => '• ' + c).join('\n')}\n\n` +
     `Full ward dataset (68 wards):\n${wards.map(w =>
-      `${w.ward_name} (${w.ward_code}): claimant ${w.claimant_rate}%, IMD employment ${(w.imd_employment_score * 100).toFixed(1)}%, inactivity-sick ${w.inactivity_sick_pct}%, GVA £${w.gva.toFixed(1)}k/head, composite decile ${w.composite_decile}/10, quadrant: ${w.quadrant}, crime ${w.crime_rate_per_1000}/1000 (rank #${w.crime_rank})`
-    ).join('\n')}`;
+      `${w.ward_name} (${w.ward_code}): claimant ${w.claimant_rate}%, youth claimant ${w.youth_claimant_rate}%, IMD employment ${(w.imd_employment_score * 100).toFixed(1)}%, inactivity-sick ${w.inactivity_sick_pct}%, GVA £${w.gva.toFixed(1)}k/head, composite decile ${w.composite_decile}/10, NEET risk decile ${w.neet_risk_decile}/10, quadrant: ${w.quadrant}, crime ${w.crime_rate_per_1000}/1000 (rank #${w.crime_rank})`
+    ).join('\n')}` +
+    buildNeetBlock(wards, neetData);
 }
 
 async function callOzzy(prompt: string, mode: 'ask' | 'briefing'): Promise<string> {
@@ -122,7 +145,7 @@ function todayKey() {
   return 'ozzy_brief_' + new Date().toISOString().slice(0, 10);
 }
 
-export default function OzzyView({ wards, dsrc, onAddHistory, onOpenView }: Props) {
+export default function OzzyView({ wards, dsrc, neetData, onAddHistory, onOpenView }: Props) {
   const [conv, setConv] = useState<ConvMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -176,7 +199,7 @@ export default function OzzyView({ wards, dsrc, onAddHistory, onOpenView }: Prop
       const threadStr = recent.length > 1
         ? `\n\nCONVERSATION SO FAR (most recent last):\n${recent.slice(0, -1).map(m => `${m.role === 'user' ? 'User' : 'You (Ozzy)'}: ${m.content}`).join('\n\n')}`
         : '';
-      const dataBlock = buildDataBlock(wards, dsrc);
+      const dataBlock = buildDataBlock(wards, dsrc, neetData);
       const prompt = `${OZZY_SYSTEM}\n\n${dataBlock}${threadStr}\n\nUser asks: ${q}\n\nAnswer in 2-4 short paragraphs. Stay in Ozzy's voice. Cite specific ward names and numbers from the data above. If a follow-up references something earlier in the conversation, use that context. If you can't answer from the data, say "I haven't got data on that" and explain what data would be needed. Plain text, no markdown, no headings.`;
 
       const rawReply = await callOzzy(prompt, 'ask');
@@ -200,7 +223,7 @@ export default function OzzyView({ wards, dsrc, onAddHistory, onOpenView }: Prop
     } finally {
       setSending(false);
     }
-  }, [conv, input, sending, wards, dsrc, onAddHistory, scrollToBottom]);
+  }, [conv, input, sending, wards, dsrc, neetData, onAddHistory, scrollToBottom]);
 
   const loadBriefing = useCallback(async () => {
     if (briefingLoaded) return;
@@ -215,8 +238,9 @@ export default function OzzyView({ wards, dsrc, onAddHistory, onOpenView }: Prop
         return;
       }
       const liveCount = Object.values(dsrc).filter(v => v === 'live').length;
-      const dataBlock = buildDataBlock(wards, dsrc);
-      const prompt = `${OZZY_SYSTEM}\n\n${dataBlock}\n\nGenerate today's Ozzy briefing. Respond ONLY with valid JSON, no markdown, no code fences, in this exact shape:\n\n{"headline":"Two sentences. The first is the news. The second is what it means. Specific, opinionated, grounded in numbers from the data above.","body":["First paragraph: the headline observation expanded with specific ward names and numbers.","Second paragraph: the structural context — what's been true for years that this fits into.","Third paragraph: what this means, in Ozzy's voice, with a specific local detail."],"quote":"One sentence Ozzy quote — the most direct, opinionated line of the briefing.","tags":[{"label":"Short topic phrase","direction":"up|down|flat|warn"}],"signals":[{"label":"Most pressing ward","value":"e.g. 11.1%","sub":"Ladywood claimants","tone":"red"},{"label":"City benchmark","value":"e.g. 6.8%","sub":"city avg","tone":"green"},{"label":"Structural gap","value":"e.g. 8.8pp","sub":"top to bottom","tone":"amber"}]}\n\nDo not say "Birmingham is on a journey". Do not be polite about the gap. The opinion is the value.\n\n(${liveCount}/3 live data sources active)`;
+      const dataBlock = buildDataBlock(wards, dsrc, neetData);
+      const highestNeetWard = [...wards].sort((a, b) => b.neet_risk_score - a.neet_risk_score)[0];
+      const prompt = `${OZZY_SYSTEM}\n\n${dataBlock}\n\nGenerate today's Ozzy briefing. Respond ONLY with valid JSON, no markdown, no code fences, in this exact shape:\n\n{"headline":"Two sentences. The first is the news. The second is what it means. Specific, opinionated, grounded in numbers from the data above.","body":["First paragraph: the headline observation expanded with specific ward names and numbers.","Second paragraph: the structural context — what's been true for years that this fits into.","Third paragraph: what this means, in Ozzy's voice, with a specific local detail."],"quote":"One sentence Ozzy quote — the most direct, opinionated line of the briefing.","tags":[{"label":"Short topic phrase","direction":"up|down|flat|warn"}],"signals":[{"label":"Most pressing ward","value":"e.g. 11.1%","sub":"Ladywood claimants","tone":"red"},{"label":"City benchmark","value":"e.g. 6.8%","sub":"city avg","tone":"green"},{"label":"Structural gap","value":"e.g. 8.8pp","sub":"top to bottom","tone":"amber"},{"label":"NEET risk — highest ward","value":"${highestNeetWard?.ward_name ?? ''}","sub":"risk decile ${highestNeetWard?.neet_risk_decile ?? 10}/10 (modelled)","tone":"red"}]}\n\nDo not say "Birmingham is on a journey". Do not be polite about the gap. The opinion is the value.\n\n(${liveCount}/4 live data sources active)`;
       const raw = await callOzzy(prompt, 'briefing');
       const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
       const parsed = JSON.parse(cleaned) as BriefingData;
@@ -229,7 +253,7 @@ export default function OzzyView({ wards, dsrc, onAddHistory, onOpenView }: Prop
       clearInterval(si);
       setBriefingLoading(false);
     }
-  }, [briefingLoaded, wards, dsrc]);
+  }, [briefingLoaded, wards, dsrc, neetData]);
 
   const toggleBriefing = useCallback(async () => {
     const opening = !briefingOpen;

@@ -3,28 +3,32 @@ import { fetchIMD } from '@/lib/fetch-imd';
 import { fetchGVA } from '@/lib/fetch-gva';
 import { fetchCrime } from '@/lib/fetch-crime';
 import { fetchQualifications, fetchEducationIMD, EDU_FALLBACK, assignEduRanks } from '@/lib/fetch-education';
+import { fetchNEETCity, fetchYouthClaimants } from '@/lib/fetch-neet';
 import { mergeData } from '@/lib/data';
-import type { DataSources, DataMeta, EducationWard, EduDataMeta } from '@/lib/types';
+import type { DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData } from '@/lib/types';
 import Dashboard from './components/Dashboard';
 
 export const revalidate = 3600;
 
 export default async function Home() {
-  const dsrc: DataSources = { nomis: 'cached', imd: 'cached', gva: 'cached', crime: 'cached' };
+  const dsrc: DataSources = { nomis: 'cached', imd: 'cached', gva: 'cached', crime: 'cached', neet: 'cached' };
   const dsmeta: DataMeta = {
     nomis: { count: null, date: null, err: null },
     imd: { lsoas: null, wards: null, err: null },
     gva: { count: null, err: null },
     crime: { count: null, err: null },
+    neet: { count: null, bham_neet_pct: null, bham_year: '—', err: null },
   };
 
-  const [nomisResult, imdResult, gvaResult, crimeResult, qualsResult, eduImdResult] = await Promise.allSettled([
+  const [nomisResult, imdResult, gvaResult, crimeResult, qualsResult, eduImdResult, youthResult, neetCityResult] = await Promise.allSettled([
     fetchNOMIS(),
     fetchIMD(),
     fetchGVA(),
     fetchCrime(),
     fetchQualifications(),
     fetchEducationIMD(),
+    fetchYouthClaimants(),
+    fetchNEETCity(),
   ]);
 
   let nMap = null, nDate = 'Jan 2026';
@@ -65,6 +69,23 @@ export default async function Home() {
     dsmeta.crime.err = String(crimeResult.reason);
   }
 
+  let youthMap = null;
+  if (youthResult.status === 'fulfilled' && youthResult.value.count > 0) {
+    youthMap = youthResult.value.map;
+    dsrc.neet = 'live';
+    dsmeta.neet = { count: youthResult.value.count, bham_neet_pct: null, bham_year: '—', err: null };
+  } else if (youthResult.status === 'rejected') {
+    dsmeta.neet.err = String(youthResult.reason);
+  }
+
+  let neetData: NeetCityData = { bham_neet_pct: 6.1, bham_year: '2022/23', wmca_neet_pct: 5.4, source: 'cached' };
+  if (neetCityResult.status === 'fulfilled') {
+    neetData = neetCityResult.value;
+    if (neetData.bham_neet_pct != null) {
+      dsmeta.neet = { ...dsmeta.neet, bham_neet_pct: neetData.bham_neet_pct, bham_year: neetData.bham_year };
+    }
+  }
+
   // Education data
   const eduMeta: EduDataMeta = {
     quals: { wards: null, err: null, source: 'cached' },
@@ -97,7 +118,7 @@ export default async function Home() {
 
   assignEduRanks(eduWards);
 
-  const wards = mergeData(nMap, iMap, gMap, popMap, crimeMap);
+  const wards = mergeData(nMap, iMap, gMap, popMap, crimeMap, youthMap);
 
-  return <Dashboard wards={wards} dsrc={dsrc} dsmeta={dsmeta} nomisDate={nDate} eduWards={eduWards} eduMeta={eduMeta} />;
+  return <Dashboard wards={wards} dsrc={dsrc} dsmeta={dsmeta} nomisDate={nDate} eduWards={eduWards} eduMeta={eduMeta} neetData={neetData} />;
 }

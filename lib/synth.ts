@@ -76,6 +76,14 @@ export function synthCrimeTrend12m(w: Pick<Ward, 'ward_code' | 'crime_rate_per_1
   return arr;
 }
 
+export function synthYouthClaimantRate(w: Pick<Ward, 'ward_code' | 'claimant_rate' | 'composite'>): number {
+  const seed = hash01(w.ward_code + 'yc');
+  // Young people are ~30–45% of claimants; share rises with deprivation
+  const baseShare = 0.30 + w.composite * 0.15;
+  const noise = (seed - 0.5) * 0.06;
+  return parseFloat(Math.max(0.5, w.claimant_rate * (baseShare + noise)).toFixed(1));
+}
+
 export function extras(w: Ward): WardExtras {
   const s = w.composite;
   const seed = hash01(w.ward_code + 'x');
