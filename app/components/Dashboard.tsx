@@ -18,6 +18,7 @@ import QualGrid from '../education/components/QualGrid';
 import QualTable from '../education/components/QualTable';
 import QualBars from '../education/components/QualBars';
 import EduDetailPanel from '../education/components/EduDetailPanel';
+import YouthDashboard from '../youth/components/YouthDashboard';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
@@ -31,7 +32,7 @@ const BHAM_BANNER =
   `| |_) |  | |  |  _ < | |  | |  | |  | |\\  | | |_| | |  _  |/ ___ \\| |  | |\n` +
   `|____/  |___| |_| \\_\\|_|  |_| |___| |_| \\_|  \\____| |_| |_/_/   \\_\\_|  |_|`;
 
-type View = 'ozzy' | 'employment' | 'crime' | 'education';
+type View = 'ozzy' | 'employment' | 'crime' | 'education' | 'youth';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -179,6 +180,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
     else if (v === 'matrix')    { setView('employment'); setEmpSub('matrix'); setSidebarOpen(false); }
     else if (v === 'employment') { setView('employment'); setSidebarOpen(false); }
     else if (v === 'education')  { setView('education'); setSidebarOpen(false); }
+    else if (v === 'youth')      { setView('youth'); setSidebarOpen(false); }
   }, []);
 
   // Employment stats
@@ -199,6 +201,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const isOzzy  = view === 'ozzy';
   const isCrime = view === 'crime';
   const isEdu   = view === 'education';
+  const isYouth = view === 'youth';
 
   const bodyClass = isOzzy ? ' ozzy-mode' : isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
 
@@ -303,6 +306,13 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             <span className="side-nav-glyph">◈</span> Education &amp; Skills
             {eduMeta.quals.source === 'live' && <span className="side-live-dot">●</span>}
           </button>
+          <button
+            className={`side-nav-btn${isYouth ? ' active' : ''}`}
+            onClick={() => { setView('youth'); setSidebarOpen(false); }}
+          >
+            <span className="side-nav-glyph">◑</span> Youth &amp; NEET Risk
+            {dsrc.neet === 'live' && <span className="side-live-dot">●</span>}
+          </button>
         </div>
         <div className="sidebar-foot">F·O·R·W·A·R·D</div>
       </aside>
@@ -324,6 +334,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               <div className="hdr-sub">
                 {isEdu
                   ? '68 wards · Census 2021 · IMD 2025 Education Domain'
+                  : isYouth
+                  ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021 · modelled NEET risk index'
                   : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
               </div>
             </div>
@@ -337,6 +349,18 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 </span>
                 <span className="dsbadge" title={eduMeta.imd.source === 'live' ? `IMD 2025 edu — ${eduMeta.imd.wards} wards` : eduMeta.imd.err ?? 'Embedded IMD scores'}>
                   IMD 2025 <span className={eduMeta.imd.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
+                </span>
+              </>
+            ) : isYouth ? (
+              <>
+                <span className="dsbadge" title={dsrc.neet === 'live' ? `NOMIS 16–24 claimant count — live` : 'Youth claimants modelled from total claimant rate'}>
+                  NOMIS 16–24 <span className={dsrc.neet === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
+                </span>
+                <span className="dsbadge" title={`Birmingham NEET ${neetData.bham_year}: ${neetData.bham_neet_pct ?? 'est. 6–7'}% [${neetData.source}]`}>
+                  NEET {neetData.bham_year} <span className={neetData.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
+                </span>
+                <span className="dsbadge" title="NEET risk index is a modelled composite — not an official rate">
+                  Risk index <span className="dot-cache">●</span> modelled
                 </span>
               </>
             ) : (
@@ -604,6 +628,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 {isEdu && eduSub === 'edu-map' && (
                   <EduMap wards={eduWards} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
                 )}
+                {/* Youth & NEET risk */}
+                {isYouth && <YouthDashboard wards={wards} neetData={neetData} />}
               </div>
               {!isOzzy && <div className="bham-watermark">FORWARD · BIRMINGHAM</div>}
             </div>
