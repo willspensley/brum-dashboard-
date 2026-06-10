@@ -212,7 +212,7 @@ export default function BullAscii() {
       ref={canvasRef}
       style={{
         display: 'block',
-        margin: '0 0 28px',
+        margin: '0 auto 28px',
         cursor: 'crosshair',
       }}
       aria-hidden="true"
