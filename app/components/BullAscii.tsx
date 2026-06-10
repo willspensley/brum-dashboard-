@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
-// 11-level density ramp: empty → solid
 const CHARS = [' ', '.', "'", ':', ';', '-', '=', '+', 'x', '#', '@'];
 
-// Shimmer pools — characters cycle within their visual weight tier
 const SHIMMER: string[][] = [
   [' '],
   ['.', "'", ' ', ','],
@@ -23,186 +21,198 @@ const SHIMMER: string[][] = [
 const COLS = 56;
 const ROWS = 32;
 const SAMPLE_SCALE = 4;
-const TICK_MS = 42;
-const BASE_SHIMMER = 0.14;   // 14% of cells change per tick at rest
-const MOUSE_RADIUS = 8;      // cells
-const SCAN_INTERVAL = 2200;  // ms between scan sweeps
-const SCAN_ROW_STEP = 28;    // ms per row during scan
+const FONT_SIZE = 9;
+const LINE_H = 9.5;
+const DAMPING = 0.984;
+const WAVE_SPEED = 0.09;  // c² factor — tuned for visible but stable propagation
 
 export default function BullAscii() {
-  const preRef = useRef<HTMLPreElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef<{ col: number; row: number } | null>(null);
-  const densityRef = useRef<number[][]>([]);
-  const spansRef = useRef<HTMLSpanElement[]>([]);
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scanRowRef = useRef(-1);
-
-  const getMouseCell = useCallback((e: MouseEvent) => {
-    const pre = preRef.current;
-    if (!pre) return null;
-    const rect = pre.getBoundingClientRect();
-    const col = Math.max(0, Math.min(COLS - 1, Math.floor(((e.clientX - rect.left) / rect.width) * COLS)));
-    const row = Math.max(0, Math.min(ROWS - 1, Math.floor(((e.clientY - rect.top) / rect.height) * ROWS)));
-    return { col, row };
-  }, []);
 
   useEffect(() => {
-    const pre = preRef.current;
-    if (!pre) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.font = `${FONT_SIZE}px 'IBM Plex Mono', monospace`;
+    const charW = ctx.measureText('M').width;
+
+    canvas.width = Math.ceil(COLS * charW);
+    canvas.height = Math.ceil(ROWS * LINE_H);
 
     const img = new Image();
 
     img.onload = () => {
-      // ── Sample image → density grid ─────────────────────────────────
+      // ── Sample image → density grid ─────────────────────────────────────
       const W = COLS * SAMPLE_SCALE;
       const H = ROWS * SAMPLE_SCALE;
-      const cvs = document.createElement('canvas');
-      cvs.width = W; cvs.height = H;
-      const ctx = cvs.getContext('2d')!;
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, W, H);
-      ctx.drawImage(img, 0, 0, W, H);
+      const sCanvas = document.createElement('canvas');
+      sCanvas.width = W; sCanvas.height = H;
+      const sCtx = sCanvas.getContext('2d')!;
+      sCtx.fillStyle = 'white';
+      sCtx.fillRect(0, 0, W, H);
+      sCtx.drawImage(img, 0, 0, W, H);
 
       const density: number[][] = [];
       for (let r = 0; r < ROWS; r++) {
-        const line: number[] = [];
+        const row: number[] = [];
         for (let c = 0; c < COLS; c++) {
-          const px = c * SAMPLE_SCALE;
-          const py = r * SAMPLE_SCALE;
-          const data = ctx.getImageData(px, py, SAMPLE_SCALE, SAMPLE_SCALE).data;
+          const data = sCtx.getImageData(c * SAMPLE_SCALE, r * SAMPLE_SCALE, SAMPLE_SCALE, SAMPLE_SCALE).data;
           let total = 0;
           const n = data.length / 4;
           for (let i = 0; i < data.length; i += 4) {
             const a = data[i + 3] / 255;
             total += ((data[i] + data[i + 1] + data[i + 2]) / 3) * a + 255 * (1 - a);
           }
-          line.push(Math.round((1 - (total / n) / 255) * (CHARS.length - 1)));
+          row.push(Math.round((1 - (total / n) / 255) * (CHARS.length - 1)));
         }
-        density.push(line);
+        density.push(row);
       }
-      densityRef.current = density;
 
-      // ── Build DOM ────────────────────────────────────────────────────
-      pre.innerHTML = density
-        .map(row =>
-          `<span style="display:block">${row
-            .map(d => {
-              const ch = d === 0 ? '\u00a0' : CHARS[d];
-              const w = d >= 8 ? 500 : d >= 5 ? 400 : 300;
-              const op = d === 0 ? 0 : (0.1 + (d / 10) * 0.9).toFixed(2);
-              return `<span data-d="${d}" style="font-weight:${w};opacity:${op}">${ch}</span>`;
-            })
-            .join('')}</span>`
-        )
-        .join('');
+      // ── 2D wave buffers (cellular automaton wave equation) ───────────────
+      // u[t+1] = 2*u[t] - u[t-1] + c²*(∇²u[t])
+      let wave     = new Float32Array(COLS * ROWS);
+      let wavePrev = new Float32Array(COLS * ROWS);
+      let waveNext = new Float32Array(COLS * ROWS);
 
-      spansRef.current = Array.from(pre.querySelectorAll<HTMLSpanElement>('[data-d]'));
-
-      // ── Periodic scan-line sweep ─────────────────────────────────────
-      // Sets scanRowRef to 0 every SCAN_INTERVAL ms,
-      // then steps it forward each row in SCAN_ROW_STEP ms.
-      const launchScan = () => {
-        scanRowRef.current = 0;
-        let r = 0;
-        const step = setInterval(() => {
-          r++;
-          scanRowRef.current = r;
-          if (r >= ROWS) { clearInterval(step); scanRowRef.current = -1; }
-        }, SCAN_ROW_STEP);
+      const addWave = (r: number, c: number, amount: number) => {
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+        wave[r * COLS + c] += amount;
       };
-      const scanTimer = setInterval(launchScan, SCAN_INTERVAL);
-      // Kick off first scan quickly
-      setTimeout(launchScan, 400);
 
-      // ── Main animation tick ──────────────────────────────────────────
-      tickRef.current = setInterval(() => {
-        const spans = spansRef.current;
-        const dens = densityRef.current;
-        const mouse = mouseRef.current;
-        const scanRow = scanRowRef.current;
+      // ── Scan-line state ──────────────────────────────────────────────────
+      let scanRow = -1;
+      let scanRowFloat = -1;
+      let lastScan = performance.now();
+      const SCAN_INTERVAL = 2200;
+      const SCAN_SPEED = 28;
 
-        for (let i = 0; i < spans.length; i++) {
-          const row = Math.floor(i / COLS);
-          const col = i % COLS;
-          const d = dens[row][col];
-          if (d === 0) continue;
+      // ── Render loop ──────────────────────────────────────────────────────
+      let rafId = 0;
 
-          // Mouse influence
-          let rate = BASE_SHIMMER;
-          let widePool = false;
-          if (mouse) {
-            const dr = row - mouse.row;
-            const dc = col - mouse.col;
-            const dist = Math.sqrt(dr * dr + dc * dc);
-            if (dist < MOUSE_RADIUS) {
-              const influence = 1 - dist / MOUSE_RADIUS;
-              rate = BASE_SHIMMER + influence * 0.75;
-              widePool = dist < MOUSE_RADIUS * 0.45;
+      const render = (ts: number) => {
+        // Advance scan line
+        if (scanRow === -1 && ts - lastScan > SCAN_INTERVAL) {
+          scanRowFloat = 0;
+          lastScan = ts;
+        }
+        if (scanRowFloat >= 0) {
+          scanRowFloat += 16 / SCAN_SPEED;
+          scanRow = Math.floor(scanRowFloat);
+          if (scanRow >= ROWS) { scanRow = -1; scanRowFloat = -1; }
+          else {
+            // Inject wave energy along scan row
+            for (let c = 0; c < COLS; c++) {
+              if ((density[scanRow]?.[c] ?? 0) > 0) {
+                addWave(scanRow, c, 0.35 * Math.sin(ts * 0.012 + c * 0.3));
+              }
             }
           }
-
-          // Scan-line row gets a big surge
-          if (row === scanRow) rate = Math.max(rate, 0.72);
-
-          if (Math.random() > rate) continue;
-
-          let pool: string[];
-          if (widePool) {
-            // Near cursor: scramble across ±3 density levels
-            const lo = Math.max(1, d - 3);
-            const hi = Math.min(CHARS.length - 1, d + 2);
-            pool = CHARS.slice(lo, hi + 1);
-          } else if (row === scanRow) {
-            // Scan row: briefly use lighter chars for the sweep flash
-            const lo = Math.max(0, d - 4);
-            pool = CHARS.slice(lo, d + 1);
-          } else {
-            pool = SHIMMER[d];
-          }
-
-          spans[i].textContent = pool[Math.floor(Math.random() * pool.length)];
         }
-      }, TICK_MS);
 
-      // Cleanup scan timer alongside tick
-      const origCleanup = () => clearInterval(scanTimer);
-      pre.dataset.scanCleanup = 'true';
-      (pre as HTMLPreElement & { _scanCleanup?: () => void })._scanCleanup = origCleanup;
-    };
+        // Sporadic wave impulses from dense cells
+        if (Math.random() < 0.25) {
+          const r = 1 + Math.floor(Math.random() * (ROWS - 2));
+          const c = 1 + Math.floor(Math.random() * (COLS - 2));
+          if ((density[r]?.[c] ?? 0) >= 3) {
+            addWave(r, c, (Math.random() - 0.5) * 0.5);
+          }
+        }
 
-    img.onerror = () => {
-      // Fallback: show a simple text placeholder if image fails
-      if (pre) pre.textContent = '';
+        // Mouse ripples
+        const mouse = mouseRef.current;
+        if (mouse) {
+          const { row: mr, col: mc } = mouse;
+          addWave(mr, mc, Math.sin(ts * 0.009) * 0.18);
+          addWave(mr - 1, mc, Math.sin(ts * 0.009 - 0.4) * 0.1);
+          addWave(mr + 1, mc, Math.sin(ts * 0.009 - 0.4) * 0.1);
+          addWave(mr, mc - 1, Math.sin(ts * 0.009 - 0.4) * 0.1);
+          addWave(mr, mc + 1, Math.sin(ts * 0.009 - 0.4) * 0.1);
+        }
+
+        // Wave propagation step
+        for (let r = 1; r < ROWS - 1; r++) {
+          for (let c = 1; c < COLS - 1; c++) {
+            const idx = r * COLS + c;
+            const laplacian =
+              wave[(r - 1) * COLS + c] + wave[(r + 1) * COLS + c] +
+              wave[r * COLS + c - 1] + wave[r * COLS + c + 1] -
+              4 * wave[idx];
+            waveNext[idx] = DAMPING * (2 * wave[idx] - wavePrev[idx] + WAVE_SPEED * laplacian);
+          }
+        }
+
+        // Swap wave buffers
+        const tmp = wavePrev;
+        wavePrev = wave;
+        wave = waveNext;
+        waveNext = tmp;
+
+        // ── Draw ──────────────────────────────────────────────────────────
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = `${FONT_SIZE}px 'IBM Plex Mono', monospace`;
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const d = density[r]?.[c] ?? 0;
+            if (d === 0) continue;
+
+            const idx = r * COLS + c;
+            const wv = wave[idx];   // typically ±0.3
+
+            // Character from shimmer pool, driven by wave phase
+            const pool = SHIMMER[d];
+            const phase = (wv * 1.5 + 0.5) * pool.length;
+            const char = pool[Math.max(0, Math.min(pool.length - 1, Math.floor(phase)))];
+
+            // Alpha: base opacity from density, wave adds ±0.2
+            const baseAlpha = 0.1 + (d / 10) * 0.9;
+            const alpha = Math.max(0.05, Math.min(1.0, baseAlpha + wv * 0.22));
+
+            const isScan = r === scanRow;
+            ctx.globalAlpha = isScan ? Math.min(1, alpha * 1.7) : alpha;
+            ctx.fillStyle = isScan ? '#7d4e36' : '#0e0f11';
+
+            ctx.fillText(char, c * charW, r * LINE_H + FONT_SIZE);
+          }
+        }
+
+        ctx.globalAlpha = 1;
+        rafId = requestAnimationFrame(render);
+      };
+
+      rafId = requestAnimationFrame(render);
+
+      // ── Mouse tracking ───────────────────────────────────────────────────
+      const onMove = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        const col = Math.max(0, Math.min(COLS - 1, Math.floor(((e.clientX - rect.left) / rect.width) * COLS)));
+        const row = Math.max(0, Math.min(ROWS - 1, Math.floor(((e.clientY - rect.top) / rect.height) * ROWS)));
+        mouseRef.current = { col, row };
+      };
+      const onLeave = () => { mouseRef.current = null; };
+      canvas.addEventListener('mousemove', onMove);
+      canvas.addEventListener('mouseleave', onLeave);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        canvas.removeEventListener('mousemove', onMove);
+        canvas.removeEventListener('mouseleave', onLeave);
+      };
     };
 
     img.src = '/bull-logo.png';
 
-    // ── Mouse tracking ───────────────────────────────────────────────
-    const onMove = (e: MouseEvent) => { mouseRef.current = getMouseCell(e); };
-    const onLeave = () => { mouseRef.current = null; };
-    pre.addEventListener('mousemove', onMove);
-    pre.addEventListener('mouseleave', onLeave);
-
-    return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
-      (pre as HTMLPreElement & { _scanCleanup?: () => void })._scanCleanup?.();
-      pre.removeEventListener('mousemove', onMove);
-      pre.removeEventListener('mouseleave', onLeave);
-    };
-  }, [getMouseCell]);
+    return () => { /* image hasn't loaded yet, no cleanup needed */ };
+  }, []);
 
   return (
-    <pre
-      ref={preRef}
+    <canvas
+      ref={canvasRef}
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: '9px',
-        lineHeight: '1.05',
-        whiteSpace: 'pre',
-        userSelect: 'none',
-        color: 'var(--ink)',
+        display: 'block',
         margin: '0 0 28px',
-        letterSpacing: '0',
         cursor: 'crosshair',
       }}
       aria-hidden="true"

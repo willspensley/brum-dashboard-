@@ -1,14 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-
-const BULL =
-  `     (\\/)  (\\/)     \n` +
-  `      \\  \\/  /      \n` +
-  `   .--\\----/--.     \n` +
-  `  /  ( o)(o)  \\     \n` +
-  `  |   (-----)  |    \n` +
-  `   \\___________/    `;
+import { useState, useEffect } from 'react';
+import BullAscii from '@/app/components/BullAscii';
 
 const CAPABILITIES = [
   { icon: '◈', label: '8 live data sources', sub: 'No API keys. No paywalls.' },
@@ -39,32 +32,11 @@ const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function AboutPage() {
-  const bullRef  = useRef<HTMLPreElement>(null);
-  const [ready,  setReady]  = useState(false);
-  const [pulseOn, setPulseOn] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const el = bullRef.current;
-    if (!el) return;
-    const lines = BULL.split('\n');
-    const cols  = Math.max(...lines.map(l => l.length));
-    el.innerHTML = lines
-      .map(l => l.padEnd(cols, ' ')
-        .split('')
-        .map(c => `<span class="ch">${c === ' ' ? '&nbsp;' : c}</span>`)
-        .join(''))
-      .join('<br>');
-    const chars = el.querySelectorAll<HTMLElement>('.ch');
-    let col = 0;
-    const tick = setInterval(() => {
-      chars.forEach((c, i) => { if (i % cols === col) c.classList.add('in'); });
-      col++;
-      if (col >= cols) {
-        clearInterval(tick);
-        setTimeout(() => { setReady(true); setPulseOn(true); }, 200);
-      }
-    }, 14);
-    return () => clearInterval(tick);
+    const t = setTimeout(() => setReady(true), 900);
+    return () => clearTimeout(t);
   }, []);
 
   const fadeStyle = (delay: number): React.CSSProperties => ({
@@ -87,16 +59,7 @@ export default function AboutPage() {
 
       {/* Hero */}
       <div style={{ textAlign: 'center', padding: '52px 24px 40px', borderBottom: '1px solid #d4d0c8' }}>
-        <pre
-          ref={bullRef}
-          className="bham-mega"
-          style={{
-            fontSize: 13,
-            lineHeight: 1.35,
-            display: 'inline-block',
-            animation: pulseOn ? 'bullPulse 4s ease-in-out infinite' : 'none',
-          }}
-        />
+        <BullAscii />
         <div style={{ ...fadeStyle(100), fontFamily: 'Instrument Serif, Georgia, serif', fontSize: 68, lineHeight: 1, color: '#0e0f11', marginTop: 20, letterSpacing: '-.02em' }}>
           Ozzy
         </div>

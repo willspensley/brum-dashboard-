@@ -24,7 +24,7 @@
   --sans:     'IBM Plex Sans', system-ui, sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
+html:has(.wrap),body:has(.wrap){height:100%;overflow:hidden;}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:13px;font-weight:400;}
 
 /* LOADING */
