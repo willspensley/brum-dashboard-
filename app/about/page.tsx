@@ -13,16 +13,17 @@ const CAPABILITIES = [
 ];
 
 const ROADMAP = [
-  { status: 'live',    label: 'Employment deprivation', detail: 'IMD 2025 + NOMIS claimant count, 68 wards' },
-  { status: 'live',    label: 'Crime rates',            detail: 'WMP recorded offences, ward-level choropleth' },
-  { status: 'live',    label: 'Education & skills',     detail: 'Census 2021 qualifications + IMD education domain' },
-  { status: 'live',    label: 'Economic output',        detail: 'GVA per head, 2022, all industries' },
-  { status: 'soon',    label: 'Housing affordability',  detail: 'Land Registry price paid + ONS income data' },
-  { status: 'soon',    label: 'School performance',     detail: 'DfE Ofsted + attainment data by ward' },
-  { status: 'soon',    label: 'Health inequality',      detail: 'OHID / NHS fingertips — life expectancy gap' },
-  { status: 'soon',    label: 'Transport connectivity', detail: 'TfWM journey times to key employment centres' },
-  { status: 'planned', label: 'Ozzy daily newsletter',  detail: 'Automated weekly briefing — subscribe by ward' },
-  { status: 'planned', label: 'Full AI chat',           detail: 'Ask Ozzy anything. Get a data-backed answer.' },
+  { status: 'live', label: 'Employment deprivation', detail: 'IMD 2025 + NOMIS claimant count, 68 wards' },
+  { status: 'live', label: 'Crime rates', detail: 'WMP recorded offences, ward-level choropleth' },
+  { status: 'live', label: 'Education & skills', detail: 'Census 2021 qualifications + IMD education domain' },
+  { status: 'live', label: 'Economic output', detail: 'GVA per head, 2022, all industries' },
+  { status: 'live', label: 'Youth & NEET risk', detail: 'Modelled composite index across 68 wards' },
+  { status: 'soon', label: 'Housing affordability', detail: 'Land Registry price paid + ONS income data' },
+  { status: 'soon', label: 'School performance', detail: 'DfE Ofsted + attainment data by ward' },
+  { status: 'soon', label: 'Health inequality', detail: 'OHID / NHS fingertips — life expectancy gap' },
+  { status: 'soon', label: 'Transport connectivity', detail: 'TfWM journey times to key employment centres' },
+  { status: 'planned', label: 'Full AI chat', detail: 'Ask Ozzy anything. Get a data-backed answer.' },
+  { status: 'planned', label: 'Ozzy daily newsletter', detail: 'Automated weekly briefing — subscribe by ward' },
 ];
 
 const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
@@ -52,6 +53,9 @@ export default function AboutPage() {
       <div style={{ borderBottom: '1px solid #d4d0c8', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 12, background: '#f5f3ee', position: 'sticky', top: 0, zIndex: 10 }}>
         <span style={{ fontSize: 10, color: '#6b6760', letterSpacing: '.04em' }}>▶ FORWARD · B·C·C</span>
         <span style={{ fontSize: 10, color: '#6b6760', marginLeft: 'auto', letterSpacing: '.06em' }}>BIRMINGHAM AI INTELLIGENCE</span>
+        <a href="/" style={{ fontSize: 10, color: '#6b6760', textDecoration: 'none', padding: '4px 8px', border: '1px solid #d4d0c8', letterSpacing: '.04em' }}>
+          View dashboards →
+        </a>
       </div>
 
       {/* Hero */}
@@ -67,11 +71,11 @@ export default function AboutPage() {
           &ldquo;Taking Brum into the AI era.&rdquo;
         </div>
         <div style={{ ...fadeStyle(440), marginTop: 28, display: 'flex', justifyContent: 'center', gap: 10 }}>
-          <a href="/ozzy" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
+          <a href="/ask" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
             Ask Ozzy →
           </a>
-          <a href="/sources" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
-            View data sources →
+          <a href="/" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
+            View dashboards →
           </a>
         </div>
       </div>
@@ -163,7 +167,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Open source */}
+        {/* Contribute */}
         <section style={{ padding: '48px 0 40px', borderBottom: '1px solid #d4d0c8' }}>
           <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, letterSpacing: '.12em', color: '#6b6760', textTransform: 'uppercase', marginBottom: 14 }}>
             Open source · for Birmingham
@@ -188,10 +192,25 @@ export default function AboutPage() {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+<<<<<<< HEAD
             <a href="https://github.com/willspensley/brum-dashboard-" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
               View on GitHub →
             </a>
             <a href="mailto:westmidlands@lookingforgrowth.uk" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
+=======
+            <a
+              href="https://github.com/willspensley/brum-dashboard-"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}
+            >
+              GitHub →
+            </a>
+            <a
+              href="mailto:westmidlands@lookingforgrowth.uk"
+              style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}
+            >
+>>>>>>> Rewrite about page, add pre-written Ask Ozzy page
               Contact us to contribute →
             </a>
             <a href="/sources" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
@@ -201,7 +220,7 @@ export default function AboutPage() {
         </section>
 
         {/* Roadmap */}
-        <section style={{ padding: '48px 0 40px', borderBottom: '1px solid #d4d0c8' }}>
+        <section style={{ padding: '48px 0 80px' }}>
           <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, letterSpacing: '.12em', color: '#6b6760', textTransform: 'uppercase', marginBottom: 14 }}>
             What&apos;s in Ozzy
           </div>
@@ -224,6 +243,7 @@ export default function AboutPage() {
               );
             })}
           </div>
+<<<<<<< HEAD
         </section>
 
         {/* Final CTA */}
@@ -240,9 +260,13 @@ export default function AboutPage() {
             </a>
           </div>
           <div style={{ marginTop: 48, fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, color: '#d4d0c8', letterSpacing: '.4em' }}>
+=======
+          <div style={{ marginTop: 48, fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, color: '#d4d0c8', letterSpacing: '.4em', textAlign: 'center' }}>
+>>>>>>> Rewrite about page, add pre-written Ask Ozzy page
             F · O · R · W · A · R · D
           </div>
         </section>
+
       </div>
     </div>
   );
