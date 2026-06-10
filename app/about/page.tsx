@@ -192,25 +192,10 @@ export default function AboutPage() {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-<<<<<<< HEAD
             <a href="https://github.com/willspensley/brum-dashboard-" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
-              View on GitHub →
-            </a>
-            <a href="mailto:westmidlands@lookingforgrowth.uk" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
-=======
-            <a
-              href="https://github.com/willspensley/brum-dashboard-"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}
-            >
               GitHub →
             </a>
-            <a
-              href="mailto:westmidlands@lookingforgrowth.uk"
-              style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}
-            >
->>>>>>> Rewrite about page, add pre-written Ask Ozzy page
+            <a href="mailto:westmidlands@lookingforgrowth.uk" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
               Contact us to contribute →
             </a>
             <a href="/sources" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
@@ -243,26 +228,7 @@ export default function AboutPage() {
               );
             })}
           </div>
-<<<<<<< HEAD
-        </section>
-
-        {/* Final CTA */}
-        <section style={{ padding: '52px 0 0', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: 32, color: '#0e0f11', lineHeight: 1.3, marginBottom: 24, fontWeight: 400 }}>
-            Birmingham deserves better data.
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-            <a href="/ozzy" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '10px 22px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
-              Ask Ozzy →
-            </a>
-            <a href="/dashboard" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '10px 22px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
-              View the dashboards →
-            </a>
-          </div>
-          <div style={{ marginTop: 48, fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, color: '#d4d0c8', letterSpacing: '.4em' }}>
-=======
           <div style={{ marginTop: 48, fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, color: '#d4d0c8', letterSpacing: '.4em', textAlign: 'center' }}>
->>>>>>> Rewrite about page, add pre-written Ask Ozzy page
             F · O · R · W · A · R · D
           </div>
         </section>
