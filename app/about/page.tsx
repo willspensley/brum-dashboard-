@@ -53,7 +53,7 @@ export default function AboutPage() {
       <div style={{ borderBottom: '1px solid #d4d0c8', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 12, background: '#f5f3ee', position: 'sticky', top: 0, zIndex: 10 }}>
         <span style={{ fontSize: 10, color: '#6b6760', letterSpacing: '.04em' }}>▶ FORWARD · B·C·C</span>
         <span style={{ fontSize: 10, color: '#6b6760', marginLeft: 'auto', letterSpacing: '.06em' }}>BIRMINGHAM AI INTELLIGENCE</span>
-        <a href="/" style={{ fontSize: 10, color: '#6b6760', textDecoration: 'none', padding: '4px 8px', border: '1px solid #d4d0c8', letterSpacing: '.04em' }}>
+        <a href="/dashboard" style={{ fontSize: 10, color: '#6b6760', textDecoration: 'none', padding: '4px 8px', border: '1px solid #d4d0c8', letterSpacing: '.04em' }}>
           View dashboards →
         </a>
       </div>
@@ -71,10 +71,10 @@ export default function AboutPage() {
           &ldquo;Taking Brum into the AI era.&rdquo;
         </div>
         <div style={{ ...fadeStyle(440), marginTop: 28, display: 'flex', justifyContent: 'center', gap: 10 }}>
-          <a href="/ask" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
+          <a href="/ozzy" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', background: '#0e0f11', color: '#f5f3ee', textDecoration: 'none', letterSpacing: '.04em' }}>
             Ask Ozzy →
           </a>
-          <a href="/" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
+          <a href="/dashboard" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, padding: '8px 18px', border: '1px solid #d4d0c8', color: '#6b6760', textDecoration: 'none', letterSpacing: '.04em' }}>
             View dashboards →
           </a>
         </div>

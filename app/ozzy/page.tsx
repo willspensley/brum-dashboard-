@@ -9,22 +9,22 @@ const QUESTIONS = [
     links: [{ label: 'Employment dashboard →', href: '/dashboard' }],
   },
   {
-    q: 'What's the NEET situation for young people in Birmingham?',
+    q: "What's the NEET situation for young people in Birmingham?",
     a: `Birmingham's 16–17 NEET rate sits around 6.1% — above the England average. Nationally, 1.01 million young people are NEET as of Jan–Mar 2026 (13.5%). The Milburn review is ongoing.\n\nThe worst-affected wards cluster in the north and east of the city. Youth unemployment and economic inactivity are highest where educational attainment is also lowest — the same postcode, the same families, the same decade.`,
-    links: [{ label: 'Youth & NEET dashboard →', href: '/youth' }],
+    links: [{ label: 'Youth & NEET dashboard →', href: '/dashboard' }],
   },
   {
     q: 'Which areas have the worst education outcomes?',
     a: `Bordesley Green is at no-quals decile 9 — fourth year running. 35.8% of residents aged 16+ have no qualifications at all. The city average is 24.1%.\n\nAston and Lozells also rank poorly. This isn't a blip. It's structural. Targeted skills investment in the Aston–Nechells–Bordesley corridor has been the obvious call for years.`,
-    links: [{ label: 'Education & Skills dashboard →', href: '/education' }],
+    links: [{ label: 'Education & Skills dashboard →', href: '/dashboard' }],
   },
   {
-    q: 'How does crime vary across Birmingham's wards?',
+    q: "How does crime vary across Birmingham's wards?",
     a: `City centre and Ladywood record the highest offence rates per 1,000 population — which is partly driven by footfall, not just deprivation. Outer wards like Sutton Four Oaks, Sutton Vesey, and Harborne sit well below the city average.\n\nWMP data is updated monthly. The choropleth map is the clearest way to see the pattern.`,
     links: [{ label: 'Crime dashboard →', href: '/dashboard' }],
   },
   {
-    q: 'What does Birmingham's economic output look like by ward?',
+    q: "What does Birmingham's economic output look like by ward?",
     a: `City centre wards dominate GVA — Ladywood, which contains the CBD, generates by far the most. But strip out the commercial core and the picture changes. Residential wards like Edgbaston and Harborne carry their weight.\n\nThe Disadvantage quadrant — low GVA, high deprivation — is concentrated in the north and east. Those wards aren't just deprived, they're economically disconnected from the city they live in.`,
     links: [{ label: 'Economic Matrix →', href: '/dashboard' }],
   },
