@@ -136,22 +136,22 @@ const TYPE_LABELS = {
 
 export default function SourcesPage() {
   return (
-    <div style={{ background: '#f5f3ee', minHeight: '100vh', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--paper)', minHeight: '100vh', fontFamily: 'var(--mono)' }}>
 
       {/* Header */}
-      <div style={{ borderBottom: '1px solid #d4d0c8', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 14, background: '#f5f3ee' }}>
+      <div style={{ borderBottom: '1px solid var(--border-solid)', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 14, background: 'var(--paper)' }}>
         <a
           href="/"
-          style={{ fontSize: 10, color: '#6b6760', textDecoration: 'none', padding: '4px 8px', border: '1px solid #d4d0c8', letterSpacing: '.04em', fontFamily: 'IBM Plex Mono, monospace' }}
+          style={{ fontSize: 10, color: 'var(--muted)', textDecoration: 'none', padding: '4px 8px', border: '1px solid var(--border-solid)', letterSpacing: '.04em', fontFamily: 'var(--mono)' }}
         >
           ← Ozzy
         </a>
-        <div style={{ fontSize: 10, color: '#6b6760', letterSpacing: '.04em' }}>▶ FORWARD · B·C·C</div>
+        <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.04em' }}>▶ FORWARD · B·C·C</div>
         <div>
-          <div style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: 20, color: '#0e0f11', lineHeight: 1 }}>
+          <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)', lineHeight: 1 }}>
             Data Sources
           </div>
-          <div style={{ fontSize: 9, color: '#6b6760', marginTop: 3, letterSpacing: '.06em' }}>
+          <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 3, letterSpacing: '.06em' }}>
             Birmingham Ozzy · All public datasets · No API keys required
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function SourcesPage() {
       {/* Body */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 32px 64px' }}>
 
-        <p style={{ fontSize: 11, color: '#6b6760', lineHeight: 1.7, marginBottom: 32, maxWidth: 640, fontFamily: 'IBM Plex Mono, monospace' }}>
+        <p style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 32, maxWidth: 640, fontFamily: 'var(--mono)' }}>
           Every dataset used in this dashboard is publicly available with no API key required.
           Data is fetched server-side on each page render (with caching) and falls back to
           embedded snapshots if a source is unreachable. Live sources are re-fetched on a
@@ -168,8 +168,8 @@ export default function SourcesPage() {
         </p>
 
         {/* Modelled fields callout */}
-        <div style={{ border: '1px solid #d4d0c8', padding: '12px 16px', marginBottom: 32, fontSize: 10, color: '#6b6760', lineHeight: 1.7, maxWidth: 640 }}>
-          <span style={{ fontWeight: 600, color: '#0e0f11' }}>Modelled / synthesised fields</span><br />
+        <div style={{ border: '1px solid var(--border-solid)', padding: '12px 16px', marginBottom: 32, fontSize: 10, color: 'var(--muted)', lineHeight: 1.7, maxWidth: 640 }}>
+          <span style={{ fontWeight: 600, color: 'var(--ink)' }}>Modelled / synthesised fields</span><br />
           A small number of fields shown in the Employment dashboard are not fetched from a live source.
           These are clearly labelled <em>(est)</em> or <em>(modelled)</em> in the UI:
           median earnings (synthesised from IMD + claimant rate), inactivity % (Census 2021 embedded),
@@ -181,9 +181,9 @@ export default function SourcesPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid #0e0f11' }}>
+              <tr style={{ borderBottom: '2px solid var(--ink)' }}>
                 {['Source', 'Publisher', 'Dataset / ID', 'Geography', 'Vintage', 'Powers', 'Dashboard', 'Fetch', 'Links'].map(h => (
-                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'IBM Plex Mono, monospace', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: '#6b6760', fontWeight: 400, whiteSpace: 'nowrap' }}>
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 400, whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
@@ -193,27 +193,27 @@ export default function SourcesPage() {
               {SOURCES.map((s, i) => {
                 const t = TYPE_LABELS[s.type];
                 return (
-                  <tr key={s.dataset_id} style={{ borderBottom: '1px solid #d4d0c8', background: i % 2 === 0 ? 'transparent' : 'rgba(14,15,17,.02)' }}>
-                    <td style={{ padding: '10px 10px', color: '#0e0f11', fontWeight: 500, fontSize: 11, lineHeight: 1.4, minWidth: 160 }}>
+                  <tr key={s.dataset_id} style={{ borderBottom: '1px solid var(--border-solid)', background: i % 2 === 0 ? 'transparent' : 'rgba(14,15,17,.02)' }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--ink)', fontWeight: 500, fontSize: 11, lineHeight: 1.4, minWidth: 160 }}>
                       {s.name}
                     </td>
-                    <td style={{ padding: '10px 10px', color: '#6b6760', fontSize: 10, lineHeight: 1.4, minWidth: 120 }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--muted)', fontSize: 10, lineHeight: 1.4, minWidth: 120 }}>
                       {s.publisher}
                     </td>
-                    <td style={{ padding: '10px 10px', color: '#6b6760', fontSize: 9, lineHeight: 1.4, minWidth: 140, maxWidth: 200, wordBreak: 'break-all' }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--muted)', fontSize: 9, lineHeight: 1.4, minWidth: 140, maxWidth: 200, wordBreak: 'break-all' }}>
                       {s.dataset_id}
                     </td>
-                    <td style={{ padding: '10px 10px', color: '#6b6760', fontSize: 10, whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--muted)', fontSize: 10, whiteSpace: 'nowrap' }}>
                       {s.geography}
                     </td>
-                    <td style={{ padding: '10px 10px', color: '#6b6760', fontSize: 10, whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--muted)', fontSize: 10, whiteSpace: 'nowrap' }}>
                       {s.vintage}
                     </td>
-                    <td style={{ padding: '10px 10px', color: '#6b6760', fontSize: 10, lineHeight: 1.5, minWidth: 180 }}>
+                    <td style={{ padding: '10px 10px', color: 'var(--muted)', fontSize: 10, lineHeight: 1.5, minWidth: 180 }}>
                       {s.what}
                     </td>
                     <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: 9, fontFamily: 'IBM Plex Mono, monospace', color: '#6b6760', letterSpacing: '.04em' }}>
+                      <span style={{ fontSize: 9, fontFamily: 'var(--mono)', color: 'var(--muted)', letterSpacing: '.04em' }}>
                         {s.dashboard}
                       </span>
                     </td>
@@ -237,8 +237,8 @@ export default function SourcesPage() {
           </table>
         </div>
 
-        <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid #d4d0c8', fontSize: 9, color: '#6b6760', lineHeight: 1.8 }}>
-          <div style={{ fontFamily: 'IBM Plex Mono, monospace', letterSpacing: '.04em' }}>
+        <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--border-solid)', fontSize: 9, color: 'var(--muted)', lineHeight: 1.8 }}>
+          <div style={{ fontFamily: 'var(--mono)', letterSpacing: '.04em' }}>
             Birmingham Ozzy · Birmingham City Council · All data publicly available
           </div>
           <div>
