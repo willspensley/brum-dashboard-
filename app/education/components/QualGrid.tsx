@@ -27,14 +27,22 @@ export default function QualGrid({ wards, selected, onSelect }: Props) {
         return (
           <div
             key={w.ward_code}
-            className={`ward-cell${isSelected ? ' selected' : ''}`}
-            style={{ background: bg, borderColor: isSelected ? 'var(--ink)' : 'transparent' }}
+            className={`wcard${isSelected ? ' selected' : ''}`}
             onClick={() => onSelect(w.ward_code)}
             title={`${w.ward_name} — ${w.qual_none}% no qualifications · ${w.qual_level4plus}% Level 4+`}
           >
-            <div className="wc-name">{w.ward_name}</div>
-            <div className="wc-val">{w.qual_none}%</div>
-            <div className="wc-sub">no quals</div>
+            <div className="wc-stripe" style={{ background: bg }} />
+            <div className="wc-nm">{w.ward_name}</div>
+            <div className="wc-sc">{w.qual_none}%</div>
+            <div className="wc-lbl">no qualifications</div>
+            <div className="wc-bars">
+              <div className="wc-bar-row">
+                <div className="wc-dot" style={{ background: '#1a2a3a' }} />
+                <div className="wc-bar-track">
+                  <div className="wc-bar-fill" style={{ width: `${Math.min(100, w.qual_level4plus)}%`, background: '#1a2a3a' }} />
+                </div>
+              </div>
+            </div>
           </div>
         );
       })}

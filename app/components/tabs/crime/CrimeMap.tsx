@@ -1,24 +1,26 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Ward } from '@/lib/types';
 import { CRIME_RAMP } from '@/lib/constants';
+import { fetchWardBoundaries } from '@/lib/fetch-ward-boundaries';
 
 interface Props {
   wards: Ward[];
   onSelect: (code: string) => void;
 }
 
-const BOUNDS_URL =
-  'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Wards_December_2022_Boundaries_UK_BGC/FeatureServer/0/query?where=LAD22CD%3D%27E08000025%27&outFields=WD22CD%2CWD22NM&f=geojson&returnGeometry=true';
-
 export default function CrimeMap({ wards, onSelect }: Props) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInited = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
-    if (mapInited.current || !mapRef.current) return;
-    mapInited.current = true;
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let mapInstance: any = null;
+    const container = containerRef.current;
+    if (!container) return;
 
     const maxRate = Math.max(...wards.map(w => w.crime_rate_per_1000));
     const wardIndex = Object.fromEntries(wards.map(w => [w.ward_code, w]));
@@ -28,41 +30,75 @@ export default function CrimeMap({ wards, onSelect }: Props) {
       return CRIME_RAMP[Math.max(0, Math.min(9, idx))];
     };
 
-    import('leaflet').then(L => {
-      const map = L.map(mapRef.current!, { zoomControl: true, scrollWheelZoom: false })
-        .setView([52.48, -1.9], 11);
+    (async () => {
+      try {
+        const [L, geo] = await Promise.all([
+          import('leaflet').then(m => m.default),
+          fetchWardBoundaries(),
+        ]);
+        if (cancelled) return;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO',
-        maxZoom: 18,
-      }).addTo(map);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
-      fetch(BOUNDS_URL)
-        .then(r => r.json())
-        .then((geo: GeoJSON.FeatureCollection) => {
-          L.geoJSON(geo, {
-            style: feat => {
-              const w = wardIndex[feat?.properties?.WD22CD ?? ''];
-              return {
-                fillColor: w ? rampColor(w.crime_rate_per_1000) : '#ccc',
-                fillOpacity: 0.75,
-                color: '#0e0f11',
-                weight: 0.7,
-              };
-            },
-            onEachFeature: (feat, layer) => {
-              const code = feat.properties?.WD22CD ?? '';
-              const w = wardIndex[code];
-              if (w) {
-                layer.bindTooltip(`<b>${w.ward_name}</b><br>${w.crime_rate_per_1000.toFixed(1)} crimes/1000<br>Rank #${w.crime_rank}`, { sticky: true });
-                layer.on('click', () => onSelect(code));
-              }
-            },
-          }).addTo(map);
-        })
-        .catch(console.error);
-    });
-  }, [wards, onSelect]);
+        const map = L.map(container, { zoomControl: true, scrollWheelZoom: false })
+          .setView([52.48, -1.9], 11);
+        mapInstance = map;
+        if (cancelled) { map.remove(); return; }
 
-  return <div ref={mapRef} className="map-container" style={{ height: '100%', minHeight: 420 }} />;
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap contributors © CARTO',
+          maxZoom: 18,
+        }).addTo(map);
+
+        L.geoJSON(geo, {
+          style: feat => {
+            const w = wardIndex[feat?.properties?.WD22CD ?? ''];
+            return {
+              fillColor: w ? rampColor(w.crime_rate_per_1000) : '#ccc',
+              fillOpacity: 0.75,
+              color: '#0e0f11',
+              weight: 0.7,
+            };
+          },
+          onEachFeature: (feat, layer) => {
+            const code = feat.properties?.WD22CD ?? '';
+            const w = wardIndex[code];
+            if (w) {
+              layer.bindTooltip(`<b>${w.ward_name}</b><br>${w.crime_rate_per_1000.toFixed(1)} crimes/1000<br>Rank #${w.crime_rank}`, { sticky: true });
+              layer.on('click', () => onSelect(code));
+            }
+          },
+        }).addTo(map);
+
+        setStatus('ready');
+      } catch (e) {
+        if (cancelled) return;
+        setErrMsg(e instanceof Error ? e.message : String(e));
+        setStatus('error');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (mapInstance) {
+        try { mapInstance.remove(); } catch { /* already gone */ }
+        mapInstance = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {status !== 'ready' && (
+        <div className="map-loading">
+          {status === 'loading'
+            ? <span>Loading ward boundaries…</span>
+            : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
+        </div>
+      )}
+      <div ref={containerRef} className="map-container" style={{ height: '100%', minHeight: 420, display: status === 'ready' ? 'block' : 'none' }} />
+    </div>
+  );
 }

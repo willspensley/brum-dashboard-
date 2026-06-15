@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
@@ -13,7 +13,6 @@ import DetailPanel from './detail/DetailPanel';
 import CrimeDetailPanel from './detail/CrimeDetailPanel';
 import CrimeTable from './tabs/crime/CrimeTable';
 import CrimeGrid from './tabs/crime/CrimeGrid';
-import OzzyView from './OzzyView';
 import QualGrid from '../education/components/QualGrid';
 import QualTable from '../education/components/QualTable';
 import QualBars from '../education/components/QualBars';
@@ -25,14 +24,7 @@ const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: fa
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-const BHAM_BANNER =
-  ` ____    ___   ____   __  __   ___   _   _    ____   _   _    _    __  __ \n` +
-  `| __ )  |_ _| |  _ \\ |  \\/  | |_ _| | \\ | |  / ___| | | | |  / \\  |  \\/  |\n` +
-  `|  _ \\   | |  | |_) || |\\/| |  | |  |  \\| | | |  _  | |_| | / _ \\ | |\\/| |\n` +
-  `| |_) |  | |  |  _ < | |  | |  | |  | |\\  | | |_| | |  _  |/ ___ \\| |  | |\n` +
-  `|____/  |___| |_| \\_\\|_|  |_| |___| |_| \\_|  \\____| |_| |_/_/   \\_\\_|  |_|`;
-
-type View = 'ozzy' | 'employment' | 'crime' | 'education' | 'youth';
+type View = 'employment' | 'crime' | 'education' | 'youth';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -73,7 +65,7 @@ const EDU_SOURCES = [
 
 export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta, neetData }: Props) {
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<View>('ozzy');
+  const [view, setView] = useState<View>('employment');
   const [empSub, setEmpSub] = useState<EmpSub>('grid');
   const [crimeSub, setCrimeSub] = useState<CrimeSub>('crime-table');
   const [eduSub, setEduSub] = useState<EduSub>('edu-grid');
@@ -82,56 +74,34 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
   const [showSources, setShowSources] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [recentHistory, setRecentHistory] = useState<string[]>([]);
-  const bannerRef = useRef<HTMLPreElement>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     try {
-      const h = localStorage.getItem('ozzy_history_v2');
-      if (h) setRecentHistory((JSON.parse(h) as { q: string }[]).slice(0, 12).map(x => x.q));
       const lev = localStorage.getItem('lastEmploymentView') as EmpSub | null;
       if (lev) setEmpSub(lev);
       const lcv = localStorage.getItem('lastCrimeView') as CrimeSub | null;
       if (lcv) setCrimeSub(lcv);
       const lev2 = localStorage.getItem('lastEduView') as EduSub | null;
       if (lev2) setEduSub(lev2);
+      const sc = localStorage.getItem('sidebarCollapsed');
+      if (sc === '1') setSidebarCollapsed(true);
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => {
-    const el = bannerRef.current;
-    if (!el) return;
-    const lines = BHAM_BANNER.split('\n');
-    el.innerHTML = lines
-      .map(l => l.split('').map(c => `<span class="ch">${c === ' ' ? '&nbsp;' : c}</span>`).join(''))
-      .join('<br>');
-    const chars = el.querySelectorAll<HTMLElement>('.ch');
-    const cols = lines[0].length;
-    let col = 0;
-    const tick = setInterval(() => {
-      chars.forEach((c, i) => { if (i % cols === col) c.classList.add('in'); });
-      col++;
-      if (col >= cols) {
-        clearInterval(tick);
-        setTimeout(() => setReady(true), 400);
-      }
-    }, 12);
-    return () => clearInterval(tick);
-  }, []);
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sidebarCollapsed', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
-        if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
-        if ((e.key === 'm' || e.key === 'M') && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
-          setSidebarOpen(o => !o);
-        }
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [sidebarOpen]);
+    const t = setTimeout(() => setReady(true), 650);
+    return () => clearTimeout(t);
+  }, []);
+
 
   const togglePin = (code: string) => {
     setPinnedWards(prev => {
@@ -141,26 +111,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
       return [prev[1], code];
     });
   };
-
-  const handleAddHistory = useCallback((q: string) => {
-    setRecentHistory(prev => {
-      const next = [q, ...prev.filter(h => h !== q)].slice(0, 12);
-      try {
-        const full: { q: string; ts: number }[] = next.map(x => ({ q: x, ts: Date.now() }));
-        localStorage.setItem('ozzy_history_v2', JSON.stringify(full));
-      } catch { /* ignore */ }
-      return next;
-    });
-  }, []);
-
-  const navigateFromHistory = useCallback((q: string) => {
-    setSidebarOpen(false);
-    setView('ozzy');
-    setTimeout(() => {
-      const input = document.querySelector<HTMLInputElement>('.ozzy-input');
-      if (input) { input.value = q; input.focus(); }
-    }, 60);
-  }, []);
 
   const setEmpSubPersist = (s: EmpSub) => {
     setEmpSub(s);
@@ -174,14 +124,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
     setEduSub(s);
     try { localStorage.setItem('lastEduView', s); } catch { /* ignore */ }
   };
-
-  const handleOpenView = useCallback((v: string) => {
-    if (v === 'crime')      { setView('crime');      setSidebarOpen(false); }
-    else if (v === 'matrix')    { setView('employment'); setEmpSub('matrix'); setSidebarOpen(false); }
-    else if (v === 'employment') { setView('employment'); setSidebarOpen(false); }
-    else if (v === 'education')  { setView('education'); setSidebarOpen(false); }
-    else if (v === 'youth')      { setView('youth'); setSidebarOpen(false); }
-  }, []);
 
   // Employment stats
   const avg      = (wards.reduce((s, w) => s + w.claimant_rate, 0) / wards.length).toFixed(1);
@@ -198,150 +140,114 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const avgL4       = (eduWards.reduce((s, w) => s + w.qual_level4plus, 0) / eduWards.length).toFixed(1);
   const highEduDep  = eduWards.filter(w => w.imd_edu_decile >= 8).length;
 
-  const isOzzy  = view === 'ozzy';
   const isCrime = view === 'crime';
   const isEdu   = view === 'education';
   const isYouth = view === 'youth';
 
-  const bodyClass = isOzzy ? ' ozzy-mode' : isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
+  const bodyClass = isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
 
   return (
     <>
       {/* Loading overlay */}
       <div id="overlay" className={ready ? 'fade' : ''}>
-        <div className="scan-line" />
-        <pre className="bham-mega" ref={bannerRef} id="bham-mega" />
-        <div className="load-meta">
-          <div className="load-headline">Initialising the intelligence pipeline</div>
-          <div className="load-sub">Birmingham City Council · Employment Deprivation v4.0</div>
-          <div className="t-log">
-            <div className="t-line vis">
-              <span className="t-ts">—</span>
-              <span className="tbadge tb-info">INIT</span>
-              <span className="t-msg">Data loaded server-side — <b>{wards.length} wards</b> · {Object.values(dsrc).filter(v => v === 'live').length}/4 live layers</span>
-            </div>
-          </div>
-          <div className="t-prog-wrap"><div className="t-prog-fill" style={{ width: '100%' }} /></div>
+        <div className="splash">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/birmingham-coat-of-arms.png" alt="" aria-hidden="true" className="splash-crest" />
+          <div className="splash-wordmark">BIRMINGHAM</div>
+          <div className="splash-sub">City Dashboard · Ozzy Intelligence</div>
         </div>
       </div>
 
       <div className="error-toast" id="error-toast"><span>⚠</span><span id="etxt" /></div>
 
-      {/* Sidebar backdrop */}
-      <div className={`sidebar-backdrop${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen(false)} />
+      {/* Treatment A — permanent sidebar + main column */}
+      <div className={`dash-shell${sidebarCollapsed ? ' collapsed' : ''}`} style={{ display: ready ? 'grid' : 'none' }}>
 
-      {/* Sidebar */}
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`} aria-hidden={!sidebarOpen}>
-        <div className="sidebar-hdr">
-          <span className="sidebar-ttl">Menu</span>
-          <button className="sidebar-x" onClick={() => setSidebarOpen(false)} aria-label="Close menu">×</button>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-section-ttl">Ozzy</div>
-          <button
-            className={`side-nav-btn${isOzzy ? ' active' : ''}`}
-            onClick={() => { setView('ozzy'); setSidebarOpen(false); }}
-          >
-            <span className="side-nav-glyph">O</span> Conversation
-          </button>
-          <button
-            className="side-nav-btn"
-            onClick={() => {
-              try { localStorage.removeItem('ozzy_conv_v2'); } catch { /* ignore */ }
-              setView('ozzy');
-              setSidebarOpen(false);
-              window.location.reload();
-            }}
-          >
-            <span className="side-nav-glyph">+</span> New conversation
-          </button>
-          <a href="/about" className="side-nav-btn" style={{ textDecoration: 'none' }}>
-            <span className="side-nav-glyph">◉</span> About Ozzy
-          </a>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-section-ttl">Recent questions</div>
-          <div className="sidebar-history-list">
-            {recentHistory.length === 0
-              ? <div className="sidebar-history-empty">no history yet</div>
-              : recentHistory.slice(0, 2).map((q, i) => (
-                <button key={i} className="sidebar-history-item" onClick={() => navigateFromHistory(q)}>
-                  {q}
-                </button>
-              ))
-            }
-            {recentHistory.length > 2 && (
-              <button className="sidebar-history-more" onClick={() => {
-                recentHistory.slice(2).forEach(q => {
-                  const btn = document.createElement('button');
-                  btn.className = 'sidebar-history-item';
-                  btn.textContent = q;
-                  btn.onclick = () => navigateFromHistory(q);
-                });
-              }}>
-                + {recentHistory.length - 2} more
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="sidebar-section">
-          <div className="sidebar-section-ttl">Dashboards</div>
-          <button
-            className={`side-nav-btn${view === 'employment' ? ' active' : ''}`}
-            onClick={() => { setView('employment'); setSidebarOpen(false); }}
-          >
-            <span className="side-nav-glyph">▦</span> Employment Deprivation
-          </button>
-          <button
-            className={`side-nav-btn${isCrime ? ' active' : ''}`}
-            onClick={() => { setView('crime'); setSidebarOpen(false); }}
-          >
-            <span className="side-nav-glyph">⚠</span> Crime Dashboard
-            {dsrc.crime === 'live' && <span className="side-live-dot">●</span>}
-          </button>
-          <button
-            className={`side-nav-btn${isEdu ? ' active' : ''}`}
-            onClick={() => { setView('education'); setSidebarOpen(false); }}
-          >
-            <span className="side-nav-glyph">◈</span> Education &amp; Skills
-            {eduMeta.quals.source === 'live' && <span className="side-live-dot">●</span>}
-          </button>
-          <button
-            className={`side-nav-btn${isYouth ? ' active' : ''}`}
-            onClick={() => { setView('youth'); setSidebarOpen(false); }}
-          >
-            <span className="side-nav-glyph">◑</span> Youth &amp; NEET Risk
-            {dsrc.neet === 'live' && <span className="side-live-dot">●</span>}
-          </button>
-        </div>
-        <div className="sidebar-foot">F·O·R·W·A·R·D</div>
-      </aside>
-
-      {/* Dashboard */}
-      <div className="wrap" style={{ display: ready ? 'flex' : 'none' }}>
-
-        {/* Header */}
-        <div className="hdr" style={{ position: 'relative' }}>
-          <div className="hdr-brand">
-            <button className="sidebar-toggle" onClick={() => setSidebarOpen(o => !o)} aria-label="Open menu">
-              <span className="st-lines"><span /><span /><span /></span>
-            </button>
-            <div className="bcc-badge" title="Birmingham City Council">
-              <span>▶ FORWARD</span>B·C·C
-            </div>
+        {/* Permanent sidebar */}
+        <aside className="dash-sidebar">
+          {/* Brand */}
+          <div className="dash-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/birmingham-coat-of-arms.png" alt="Birmingham crest" className="dash-crest" />
             <div>
-              <div className="hdr-title">Birmingham — Ozzy</div>
-              <div className="hdr-sub">
-                {isEdu
-                  ? '68 wards · Census 2021 · IMD 2025 Education Domain'
-                  : isYouth
-                  ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021 · modelled NEET risk index'
-                  : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
+              <div className="dash-brand-name">Birmingham</div>
+              <div className="dash-brand-sub">City Dashboard</div>
+            </div>
+          </div>
+
+          {/* Dashboards nav */}
+          <div className="dash-nav-section">
+            <div className="dash-nav-section-ttl">Reporting</div>
+            <button className={`dash-nav-btn${view === 'employment' ? ' active' : ''}`} onClick={() => setView('employment')}>
+              <span className="dash-nav-glyph">▦</span> Employment
+            </button>
+            <button className={`dash-nav-btn${isCrime ? ' active' : ''}`} onClick={() => setView('crime')}>
+              <span className="dash-nav-glyph">⚠</span> Crime
+              {dsrc.crime === 'live' && <span className="dash-live-dot">●</span>}
+            </button>
+            <button className={`dash-nav-btn${isEdu ? ' active' : ''}`} onClick={() => setView('education')}>
+              <span className="dash-nav-glyph">◈</span> Education &amp; Skills
+              {eduMeta.quals.source === 'live' && <span className="dash-live-dot">●</span>}
+            </button>
+            <button className={`dash-nav-btn${isYouth ? ' active' : ''}`} onClick={() => setView('youth')}>
+              <span className="dash-nav-glyph">◑</span> Youth &amp; NEET
+              {dsrc.neet === 'live' && <span className="dash-live-dot">●</span>}
+            </button>
+          </div>
+
+          {/* Ask Ozzy link */}
+          <div className="dash-nav-section">
+            <div className="dash-nav-section-ttl">Ozzy</div>
+            <a href="/ozzy" className="dash-nav-btn">
+              <span className="dash-nav-glyph">?</span> Ask Ozzy
+            </a>
+            <a href="/about" className="dash-nav-btn">
+              <span className="dash-nav-glyph">◉</span> About Ozzy
+            </a>
+          </div>
+
+          {/* FORWARD scroll */}
+          <div className="dash-sidebar-foot">
+            <svg viewBox="0 0 200 44" width="150" height="33" aria-label="Forward — city motto">
+              <path d="M14 14 L2 8 L6 22 L2 36 L14 30 Z" fill="var(--herald-navy)" />
+              <path d="M186 14 L198 8 L194 22 L198 36 L186 30 Z" fill="var(--herald-navy)" />
+              <path d="M14 8 L186 8 L180 22 L186 36 L14 36 L20 22 Z" fill="#f6f4ee" stroke="var(--herald-navy)" strokeWidth="1.4" />
+              <text x="100" y="27" textAnchor="middle" fontFamily="Baskervville, Georgia, serif" fontSize="15" fontWeight="600" letterSpacing="3" fill="var(--herald-red)">FORWARD</text>
+            </svg>
+          </div>
+        </aside>
+
+        {/* Main column */}
+        <div className="wrap">
+
+          {/* Top bar */}
+          <div className="hdr">
+            <div className="hdr-brand">
+              <button
+                className="hdr-sidebar-toggle"
+                onClick={toggleSidebar}
+                aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+                title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+              >
+                <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                  <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </button>
+              <div className="bcc-badge" title="Birmingham City Council">
+                <span>▶ FORWARD</span>B·C·C
+              </div>
+              <div>
+                <div className="hdr-title">
+                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : 'Employment Deprivation'}
+                </div>
+                <div className="hdr-sub">
+                  {isEdu ? '68 wards · Census 2021 · IMD 2025 Education Domain'
+                    : isYouth ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021'
+                    : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
+                </div>
               </div>
             </div>
-          </div>
-          <div />
-          <div className="hdr-right">
+            <div className="hdr-right">
             {isEdu ? (
               <>
                 <span className="dsbadge" title={eduMeta.quals.source === 'live' ? `City Observatory — ${eduMeta.quals.wards} wards` : eduMeta.quals.err ?? 'Embedded Census 2021 snapshot'}>
@@ -428,7 +334,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               <div className="src-foot">
                 {isEdu
                   ? 'All education data is publicly available. No API key required. Data loaded server-side with a 24hr cache.'
-                  : <><b style={{ color: 'var(--q-prosp)' }}>●</b> Live = fetched server-side this render.{' '}<b style={{ color: '#7d4e36' }}>●</b> Cached = endpoint unreachable, embedded snapshot used.</>}
+                  : <><b style={{ color: 'var(--q-prosp)' }}>●</b> Live = fetched server-side this render.{' '}<b style={{ color: 'var(--accent)' }}>●</b> Cached = endpoint unreachable, embedded snapshot used.</>}
                 <div style={{ marginTop: 8 }}>
                   <a href="/sources" style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--ink)', textDecoration: 'underline', letterSpacing: '.04em' }}>
                     View all sources ↗
@@ -438,6 +344,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             </div>
           )}
         </div>
+        <div className="hdr-dancetty" aria-hidden="true" />
 
         <div className={`body${bodyClass}`}>
           <div className="lcol">
@@ -522,7 +429,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {view === 'employment' && (
               <div className="data-view-toolbar">
                 <div className="breadcrumb">
-                  <button className="breadcrumb-back" onClick={() => setView('ozzy')}>← Ozzy</button>
+                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
                   <span style={{ margin: '0 6px' }}>/</span>
                   <span>Employment Deprivation</span>
                 </div>
@@ -538,7 +445,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {isCrime && (
               <div className="data-view-toolbar">
                 <div className="breadcrumb">
-                  <button className="breadcrumb-back" onClick={() => setView('ozzy')}>← Ozzy</button>
+                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
                   <span style={{ margin: '0 6px' }}>/</span>
                   <span>Crime Dashboard</span>
                 </div>
@@ -549,7 +456,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {isEdu && (
               <div className="data-view-toolbar">
                 <div className="breadcrumb">
-                  <button className="breadcrumb-back" onClick={() => setView('ozzy')}>← Ozzy</button>
+                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
                   <span style={{ margin: '0 6px' }}>/</span>
                   <span>Education &amp; Skills</span>
                 </div>
@@ -597,15 +504,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {/* Panel */}
             <div className="panel" style={{ flex: 1, position: 'relative' }}>
               <div className="panel-body">
-                {isOzzy && (
-                  <OzzyView
-                    wards={wards}
-                    dsrc={dsrc}
-                    neetData={neetData}
-                    onAddHistory={handleAddHistory}
-                    onOpenView={handleOpenView}
-                  />
-                )}
                 {/* Employment sub-views */}
                 {view === 'employment' && empSub === 'grid'    && <GridView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
                 {view === 'employment' && empSub === 'list'    && <TableView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
@@ -631,7 +529,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 {/* Youth & NEET risk */}
                 {isYouth && <YouthDashboard wards={wards} neetData={neetData} />}
               </div>
-              {!isOzzy && <div className="bham-watermark">FORWARD · BIRMINGHAM</div>}
+              <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
             </div>
 
           </div>
@@ -713,7 +611,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             )}
           </div>
         </div>
-      </div>
+        </div>{/* end .wrap */}
+      </div>{/* end .dash-shell */}
     </>
   );
 }

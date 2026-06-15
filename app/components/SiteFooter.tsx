@@ -1,0 +1,58 @@
+export default function SiteFooter() {
+  return (
+    <footer className="site-foot">
+      <div className="site-foot-dancetty" />
+      <div className="site-foot-inner">
+
+        <div className="site-foot-cols">
+          <div className="site-foot-col">
+            <div className="site-foot-brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/birmingham-coat-of-arms.png" alt="Birmingham crest" />
+              <div>
+                <div className="site-foot-brand-name">Ozzy</div>
+                <div className="site-foot-brand-sub">Birmingham · AI Intelligence</div>
+              </div>
+            </div>
+            <p className="site-foot-blurb">
+              Open-source civic intelligence for Birmingham City Council. Every line of code, every dataset, every methodology — public.
+            </p>
+          </div>
+
+          <div className="site-foot-col">
+            <div className="site-foot-col-ttl">Explore</div>
+            <a href="/about">About Ozzy</a>
+            <a href="/ozzy">Ask Ozzy</a>
+            <a href="/dashboard">Dashboards</a>
+            <a href="/sources">Data Sources</a>
+          </div>
+
+          <div className="site-foot-col">
+            <div className="site-foot-col-ttl">Contribute</div>
+            <a href="https://github.com/willspensley/brum-dashboard-" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+            <a href="mailto:westmidlands@lookingforgrowth.uk">Join the Ozzy team →</a>
+            <span className="site-foot-note">No coding required.<br />Brummies welcome.</span>
+          </div>
+
+          <div className="site-foot-col site-foot-col-scroll">
+            <svg viewBox="0 0 200 44" width="170" height="38" aria-label="Forward — city motto">
+              <path d="M14 14 L2 8 L6 22 L2 36 L14 30 Z" fill="var(--herald-navy)" />
+              <path d="M186 14 L198 8 L194 22 L198 36 L186 30 Z" fill="var(--herald-navy)" />
+              <path d="M14 8 L186 8 L180 22 L186 36 L14 36 L20 22 Z" fill="#f6f4ee" stroke="var(--herald-navy)" strokeWidth="1.4" />
+              <text x="100" y="27" textAnchor="middle" fontFamily="Baskervville, Georgia, serif" fontSize="15" fontWeight="600" letterSpacing="3" fill="var(--herald-red)">FORWARD</text>
+            </svg>
+            <div className="site-foot-motto">Birmingham&apos;s city motto, since 1889.</div>
+          </div>
+        </div>
+
+        <div className="site-foot-bottom">
+          <div>© Birmingham City Council · {new Date().getFullYear()} · Built on public data</div>
+          <div className="site-foot-bottom-meta">
+            Base geography: <strong>E08000025</strong> · 68 wards (Dec 2022) · Data: NOMIS · IMD 2025 · Census 2021 · WMP · City Observatory
+          </div>
+        </div>
+
+      </div>
+    </footer>
+  );
+}

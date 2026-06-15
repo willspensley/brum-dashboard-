@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EducationWard } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
+import { fetchWardBoundaries } from '@/lib/fetch-ward-boundaries';
 
 type Metric = 'none' | 'level4' | 'imd';
 
@@ -18,9 +19,6 @@ const LEGEND_LABELS: Record<Metric, [string, string]> = {
   imd: ['Least deprived', 'Most deprived'],
 };
 
-const BOUNDS_URL =
-  'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Wards_December_2022_Boundaries_UK_BGC/FeatureServer/0/query?where=LAD22CD%3D%27E08000025%27&outFields=WD22CD%2CWD22NM&f=geojson&returnGeometry=true';
-
 interface Props {
   wards: EducationWard[];
   onSelect: (code: string) => void;
@@ -32,6 +30,8 @@ export default function EduMap({ wards, onSelect }: Props) {
   const layerRef = useRef<unknown>(null);
   const metricRef = useRef<Metric>('none');
   const [metric, setMetric] = useState<Metric>('none');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [errMsg, setErrMsg] = useState('');
 
   const wardIndex = Object.fromEntries(wards.map(w => [w.ward_code, w]));
   const maxNone = Math.max(...wards.map(w => w.qual_none));
@@ -62,53 +62,69 @@ export default function EduMap({ wards, onSelect }: Props) {
   }
 
   useEffect(() => {
-    if (mapRef.current || !containerRef.current) return;
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let mapInstance: any = null;
+    const container = containerRef.current;
+    if (!container) return;
 
-    import('leaflet').then(L => {
-      if (!containerRef.current) return;
+    (async () => {
+      try {
+        const [L, geo] = await Promise.all([
+          import('leaflet').then(m => m.default),
+          fetchWardBoundaries(),
+        ]);
+        if (cancelled) return;
 
-      const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false })
-        .setView([52.48, -1.9], 11);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 18,
-      }).addTo(map);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-        maxZoom: 18, pane: 'shadowPane',
-      }).addTo(map);
+        const map = L.map(container, { zoomControl: true, scrollWheelZoom: false })
+          .setView([52.48, -1.9], 11);
+        mapInstance = map;
+        mapRef.current = map;
+        if (cancelled) { map.remove(); mapRef.current = null; return; }
 
-      mapRef.current = map;
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 18,
+        }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+          maxZoom: 18, pane: 'shadowPane',
+        }).addTo(map);
 
-      fetch(BOUNDS_URL)
-        .then(r => r.json())
-        .then((geo: GeoJSON.FeatureCollection) => {
-          const layer = L.geoJSON(geo, {
-            style: feat => {
-              const w = wardIndex[feat?.properties?.WD22CD ?? ''];
-              return { fillColor: w ? getColor(w, metricRef.current) : '#ccc', fillOpacity: 0.75, color: '#f5f3ee', weight: 1 };
-            },
-            onEachFeature: (feat, lyr) => {
-              const code = feat.properties?.WD22CD ?? '';
-              const w = wardIndex[code];
-              if (!w) return;
-              lyr.on('click', () => onSelect(code));
-              lyr.on('mouseover', e => (e.target as L.Path).setStyle({ fillOpacity: 0.95, weight: 2 }));
-              lyr.on('mouseout',  e => (e.target as L.Path).setStyle({ fillOpacity: 0.75, weight: 1 }));
-              (lyr as L.Layer & { bindTooltip(s: string, o: object): void })
-                .bindTooltip(getTooltip(w, metricRef.current), { className: 'map-tooltip', sticky: true });
-            },
-          }).addTo(map);
-          layerRef.current = layer;
-        })
-        .catch(console.error);
-    });
+        const layer = L.geoJSON(geo, {
+          style: feat => {
+            const w = wardIndex[feat?.properties?.WD22CD ?? ''];
+            return { fillColor: w ? getColor(w, metricRef.current) : '#ccc', fillOpacity: 0.75, color: '#f5f3ee', weight: 1 };
+          },
+          onEachFeature: (feat, lyr) => {
+            const code = feat.properties?.WD22CD ?? '';
+            const w = wardIndex[code];
+            if (!w) return;
+            lyr.on('click', () => onSelect(code));
+            lyr.on('mouseover', e => (e.target as L.Path).setStyle({ fillOpacity: 0.95, weight: 2 }));
+            lyr.on('mouseout',  e => (e.target as L.Path).setStyle({ fillOpacity: 0.75, weight: 1 }));
+            (lyr as L.Layer & { bindTooltip(s: string, o: object): void })
+              .bindTooltip(getTooltip(w, metricRef.current), { className: 'map-tooltip', sticky: true });
+          },
+        }).addTo(map);
+        layerRef.current = layer;
+        setStatus('ready');
+      } catch (e) {
+        if (cancelled) return;
+        setErrMsg(e instanceof Error ? e.message : String(e));
+        setStatus('error');
+      }
+    })();
 
     return () => {
-      if (mapRef.current) {
-        (mapRef.current as { remove(): void }).remove();
-        mapRef.current = null;
-        layerRef.current = null;
+      cancelled = true;
+      if (mapInstance) {
+        try { mapInstance.remove(); } catch { /* already gone */ }
+        mapInstance = null;
       }
+      mapRef.current = null;
+      layerRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -170,7 +186,14 @@ export default function EduMap({ wards, onSelect }: Props) {
           <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)' }}>{LEGEND_LABELS[metric][1]}</span>
         </div>
       </div>
-      <div ref={containerRef} className="map-container" style={{ minHeight: 440 }} />
+      {status !== 'ready' && (
+        <div className="map-loading" style={{ height: 440 }}>
+          {status === 'loading'
+            ? <span>Loading ward boundaries…</span>
+            : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
+        </div>
+      )}
+      <div ref={containerRef} className="map-container" style={{ minHeight: 440, display: status === 'ready' ? 'block' : 'none' }} />
     </div>
   );
 }
