@@ -55,7 +55,7 @@ export default async function DashboardPage() {
     gMap = gvaResult.value.map;
     popMap = gvaResult.value.popMap;
     dsrc.gva = 'live';
-    dsmeta.gva = { count: gvaResult.value.count, err: null };
+    dsmeta.gva = { count: gvaResult.value.count, year: gvaResult.value.year, err: null };
   } else {
     dsmeta.gva.err = String(gvaResult.reason);
   }

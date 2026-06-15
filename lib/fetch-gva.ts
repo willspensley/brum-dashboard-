@@ -2,8 +2,10 @@ export async function fetchGVA(): Promise<{
   map: Record<string, number>;
   popMap: Record<string, number>;
   count: number;
+  year: number;
 }> {
-  const gvaUrl = 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/gross-value-added-gva-all-industries-birmingham-wards/records?where=year=2022&limit=100&select=ward_name,ward_code,gva_total_millions';
+  // Fetch without a year filter, sorted newest first — picks up 2023/2024 data automatically when City Observatory publishes it
+  const gvaUrl = 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/gross-value-added-gva-all-industries-birmingham-wards/records?limit=100&select=ward_name,ward_code,gva_total_millions,year&order_by=year%20desc';
   const popUrl = 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/census-2021-age-birmingham-wards/records?limit=100&select=ward_code,total_population';
 
   const [gr, pr] = await Promise.all([
@@ -15,9 +17,19 @@ export async function fetchGVA(): Promise<{
 
   const gj = await gr.json();
   const pj = await pr.json();
-  const gvs: Record<string, unknown>[] = gj.results ?? gj.records ?? [];
+  const allGvs: Record<string, unknown>[] = gj.results ?? gj.records ?? [];
   const pps: Record<string, unknown>[] = pj.results ?? pj.records ?? [];
-  if (!gvs.length || !pps.length) throw new Error('empty');
+  if (!allGvs.length || !pps.length) throw new Error('empty');
+
+  // Use only the most recent year present in the dataset
+  const latestYear = Math.max(...allGvs.map(r => {
+    const f = (r.fields ?? r) as Record<string, unknown>;
+    return parseInt(f.year as string) || 0;
+  }));
+  const gvs = allGvs.filter(r => {
+    const f = (r.fields ?? r) as Record<string, unknown>;
+    return parseInt(f.year as string) === latestYear;
+  });
 
   const popMap: Record<string, number> = {};
   pps.forEach(r => {
@@ -34,5 +46,5 @@ export async function fetchGVA(): Promise<{
     }
   });
 
-  return { map, popMap, count: Object.keys(map).length };
+  return { map, popMap, count: Object.keys(map).length, year: latestYear };
 }

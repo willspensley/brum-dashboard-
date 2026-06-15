@@ -49,6 +49,26 @@ export function rankOf(wards: Ward[], w: Ward, key: keyof Ward, reverse: boolean
   return sorted.findIndex(x => x.ward_code === w.ward_code) + 1;
 }
 
+export function quadrantSummary(wards: Ward[], w: Ward): string {
+  const gvaRank = rankOf(wards, w, 'gva', true);
+  const depRank = rankOf(wards, w, 'imd_employment_score', true);
+  const x = w.gva.toFixed(1);
+  const imd = (w.imd_employment_score * 100).toFixed(1);
+  const cc = w.claimant_rate.toFixed(1);
+  switch (w.quadrant) {
+    case 'prosperous':
+      return `${w.ward_name} generates £${x}k GVA per head (ranked ${gvaRank} in Birmingham) and has a ${cc}% claimant rate — one of the city's more economically self-sustaining wards, where output is reflected in resident prosperity.`;
+    case 'workhorse':
+      return `${w.ward_name} generates £${x}k GVA per head (ranked ${gvaRank}) but carries a ${cc}% claimant rate and ${imd}% IMD employment score — significant output that isn't reaching the people who live here.`;
+    case 'commuter':
+      return `${w.ward_name} has a ${cc}% claimant rate and ${imd}% IMD employment score — residents are relatively prosperous — but workplace GVA is just £${x}k per head (ranked ${gvaRank}). Economic contribution registers elsewhere.`;
+    case 'disadvantage':
+      return `${w.ward_name} generates £${x}k GVA per head (ranked ${gvaRank}) and ${imd}% of working-age residents face employment deprivation (ranked ${depRank} worst). Low output and high need — both sides of the equation are under pressure.`;
+    default:
+      return '';
+  }
+}
+
 export function quadrantNarrative(wards: Ward[], w: Ward): string {
   const gvaRank = rankOf(wards, w, 'gva', true);
   const depRank = rankOf(wards, w, 'imd_employment_score', true);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
@@ -18,13 +18,16 @@ import QualTable from '../education/components/QualTable';
 import QualBars from '../education/components/QualBars';
 import EduDetailPanel from '../education/components/EduDetailPanel';
 import YouthDashboard from '../youth/components/YouthDashboard';
+import HousingDashboard from '../housing/components/HousingDashboard';
+import { buildHousingWards } from '@/lib/synth-housing';
+import type { HousingWard } from '@/lib/types';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-type View = 'employment' | 'crime' | 'education' | 'youth';
+type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -140,9 +143,12 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const avgL4       = (eduWards.reduce((s, w) => s + w.qual_level4plus, 0) / eduWards.length).toFixed(1);
   const highEduDep  = eduWards.filter(w => w.imd_edu_decile >= 8).length;
 
-  const isCrime = view === 'crime';
-  const isEdu   = view === 'education';
-  const isYouth = view === 'youth';
+  const isCrime   = view === 'crime';
+  const isEdu     = view === 'education';
+  const isYouth   = view === 'youth';
+  const isHousing = view === 'housing';
+
+  const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
 
   const bodyClass = isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
 
@@ -193,6 +199,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               <span className="dash-nav-glyph">◑</span> Youth &amp; NEET
               {dsrc.neet === 'live' && <span className="dash-live-dot">●</span>}
             </button>
+            <button className={`dash-nav-btn${isHousing ? ' active' : ''}`} onClick={() => setView('housing')}>
+              <span className="dash-nav-glyph">⌂</span> Housing
+            </button>
           </div>
 
           {/* Ask Ozzy link */}
@@ -238,17 +247,30 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
               <div>
                 <div className="hdr-title">
-                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : 'Employment Deprivation'}
+                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : 'Employment Deprivation'}
                 </div>
                 <div className="hdr-sub">
                   {isEdu ? '68 wards · Census 2021 · IMD 2025 Education Domain'
                     : isYouth ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021'
+                    : isHousing ? '68 wards · Census 2021 · IMD 2025 · modelled estimates'
                     : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
                 </div>
               </div>
             </div>
             <div className="hdr-right">
-            {isEdu ? (
+            {isHousing ? (
+              <>
+                <span className="dsbadge" title="Census 2021 tenure profiles — embedded ward-level estimates">
+                  Census 2021 <span className="dot-cache">●</span>
+                </span>
+                <span className="dsbadge" title="IMD 2025 employment domain used as deprivation proxy">
+                  IMD 2025 <span className="dot-cache">●</span>
+                </span>
+                <span className="dsbadge" title="All housing metrics are modelled estimates — not official statistics">
+                  est <span className="dot-cache">●</span> modelled
+                </span>
+              </>
+            ) : isEdu ? (
               <>
                 <span className="dsbadge" title={eduMeta.quals.source === 'live' ? `City Observatory — ${eduMeta.quals.wards} wards` : eduMeta.quals.err ?? 'Embedded Census 2021 snapshot'}>
                   Qualifications <span className={eduMeta.quals.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
@@ -468,6 +490,22 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
             )}
 
+            {/* Breadcrumb + legend — housing */}
+            {isHousing && (
+              <div className="data-view-toolbar">
+                <div className="breadcrumb">
+                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
+                  <span style={{ margin: '0 6px' }}>/</span>
+                  <span>Housing Affordability</span>
+                </div>
+                <div className="legend-row">
+                  <span className="llbl" style={{ marginRight: 2 }}>Lower pressure</span>
+                  {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
+                  <span className="llbl" style={{ marginLeft: 2 }}>Higher</span>
+                </div>
+              </div>
+            )}
+
             {/* Employment sub-tabs */}
             {view === 'employment' && (
               <div className="sub-tab-bar">
@@ -528,6 +566,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 )}
                 {/* Youth & NEET risk */}
                 {isYouth && <YouthDashboard wards={wards} neetData={neetData} />}
+                {/* Housing Affordability */}
+                {isHousing && <HousingDashboard wards={housingWards} />}
               </div>
               <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
             </div>

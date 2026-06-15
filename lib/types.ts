@@ -42,7 +42,7 @@ export interface DataSources {
 export interface DataMeta {
   nomis: { count: number | null; date: string | null; err: string | null };
   imd: { lsoas: number | null; wards: number | null; err: string | null };
-  gva: { count: number | null; err: string | null };
+  gva: { count: number | null; year?: number; err: string | null };
   crime: { count: number | null; err: string | null };
   neet: { count: number | null; bham_neet_pct: number | null; bham_year: string; err: string | null };
 }
@@ -81,4 +81,29 @@ export type EduDataSource = 'live' | 'cached';
 export interface EduDataMeta {
   quals: { wards: number | null; err: string | null; source: EduDataSource };
   imd: { wards: number | null; err: string | null; source: EduDataSource };
+}
+
+export interface HousingWard {
+  ward_code: string;
+  ward_name: string;
+  // Affordability — all modelled
+  median_house_price_k: number;    // £k
+  price_to_income: number;          // ratio
+  private_rent_pcm: number;         // £/month
+  rent_income_pct: number;          // % of annual earnings spent on rent
+  // Tenure mix — modelled from Census 2021 profile
+  owner_occupation_pct: number;
+  social_rented_pct: number;
+  private_rented_pct: number;
+  // Conditions
+  overcrowding_pct: number;         // % households overcrowded
+  // Composite
+  housing_pressure_score: number;   // 0-1
+  housing_pressure_decile: number;  // 1-10
+  housing_pressure_rank: number;    // 1 = most pressure
+  // Context from base Ward
+  char: string;
+  earnings: number;
+  claimant_rate: number;
+  imd_employment_score: number;
 }

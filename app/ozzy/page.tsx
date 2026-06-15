@@ -156,7 +156,7 @@ export default function OzzyPage() {
       entryRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
-    setAskedIds(prev => new Set([...prev, id]));
+    setAskedIds(prev => { const s = new Set(prev); s.add(id); return s; });
     setChatHistory(prev => [...prev, { qId: id, ts: Date.now(), done: false }]);
   }, [askedIds]);
 
