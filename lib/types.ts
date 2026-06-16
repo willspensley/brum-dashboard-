@@ -83,6 +83,30 @@ export interface EduDataMeta {
   imd: { wards: number | null; err: string | null; source: EduDataSource };
 }
 
+export interface FiscalBenefits {
+  universalCredit: number;
+  statePension: number;
+  disability: number;
+  childBenefit: number;
+  pensionCredit: number;
+  carers: number;
+  councilTaxSupportOther: number;
+}
+
+export interface FiscalWard {
+  ward_code: string;
+  ward_name: string;
+  population: number;
+  age: { children: number; working: number; pension: number };
+  benefits: FiscalBenefits;
+  benefitPerHead: number;
+  revenuePerHead: number;
+  servicePerHead: number;
+  net: number;
+  driver: string;
+  provenance: { benefits: string; revenue: string; population: string };
+}
+
 export interface HousingWard {
   ward_code: string;
   ward_name: string;

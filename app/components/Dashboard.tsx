@@ -21,13 +21,14 @@ import YouthDashboard from '../youth/components/YouthDashboard';
 import HousingDashboard from '../housing/components/HousingDashboard';
 import { buildHousingWards } from '@/lib/synth-housing';
 import type { HousingWard } from '@/lib/types';
+import FiscalDashboard from '../fiscal/components/FiscalDashboard';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing';
+type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -147,6 +148,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const isEdu     = view === 'education';
   const isYouth   = view === 'youth';
   const isHousing = view === 'housing';
+  const isFiscal  = view === 'fiscal';
 
   const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
 
@@ -202,6 +204,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             <button className={`dash-nav-btn${isHousing ? ' active' : ''}`} onClick={() => setView('housing')}>
               <span className="dash-nav-glyph">⌂</span> Housing
             </button>
+            <button className={`dash-nav-btn${isFiscal ? ' active' : ''}`} onClick={() => setView('fiscal')}>
+              <span className="dash-nav-glyph">£</span> Fiscal Balance
+            </button>
           </div>
 
           {/* Ask Ozzy link */}
@@ -247,18 +252,28 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
               <div>
                 <div className="hdr-title">
-                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : 'Employment Deprivation'}
+                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment Deprivation'}
                 </div>
                 <div className="hdr-sub">
                   {isEdu ? '68 wards · Census 2021 · IMD 2025 Education Domain'
                     : isYouth ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021'
                     : isHousing ? '68 wards · Census 2021 · IMD 2025 · modelled estimates'
+                    : isFiscal ? '68 wards · revenue, benefits & services per head · modelled estimates'
                     : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
                 </div>
               </div>
             </div>
             <div className="hdr-right">
-            {isHousing ? (
+            {isFiscal ? (
+              <>
+                <span className="dsbadge" title="Ward earnings, IMD 2025 and Census 2021 age profiles used as modelling inputs">
+                  Earnings &amp; IMD <span className="dot-cache">●</span>
+                </span>
+                <span className="dsbadge" title="Revenue, benefit and service spend per head are all modelled — DWP Stat-Xplore integration pending">
+                  All figures <span className="dot-cache">●</span> modelled
+                </span>
+              </>
+            ) : isHousing ? (
               <>
                 <span className="dsbadge" title="Census 2021 tenure profiles — embedded ward-level estimates">
                   Census 2021 <span className="dot-cache">●</span>
@@ -506,6 +521,17 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
             )}
 
+            {/* Breadcrumb — fiscal */}
+            {isFiscal && (
+              <div className="data-view-toolbar">
+                <div className="breadcrumb">
+                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
+                  <span style={{ margin: '0 6px' }}>/</span>
+                  <span>Ward Net Fiscal Balance</span>
+                </div>
+              </div>
+            )}
+
             {/* Employment sub-tabs */}
             {view === 'employment' && (
               <div className="sub-tab-bar">
@@ -568,6 +594,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 {isYouth && <YouthDashboard wards={wards} neetData={neetData} />}
                 {/* Housing Affordability */}
                 {isHousing && <HousingDashboard wards={housingWards} />}
+                {/* Ward Net Fiscal Balance */}
+                {isFiscal && <FiscalDashboard wards={wards} />}
               </div>
               <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
             </div>
