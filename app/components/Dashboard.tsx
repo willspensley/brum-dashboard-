@@ -135,15 +135,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
     try { localStorage.setItem('lastEduView', s); } catch { /* ignore */ }
   };
 
-  // Employment stats
-  const avg      = (wards.reduce((s, w) => s + w.claimant_rate, 0) / wards.length).toFixed(1);
-  const sorted   = [...wards].sort((a, b) => b.claimant_rate - a.claimant_rate);
-  const depCount = wards.filter(w => w.composite_decile >= 9).length;
-
-  // Crime stats
-  const avgCrime    = (wards.reduce((s, w) => s + w.crime_rate_per_1000, 0) / wards.length).toFixed(1);
-  const sortedCrime = [...wards].sort((a, b) => b.crime_rate_per_1000 - a.crime_rate_per_1000);
-
   const isCrime   = view === 'crime';
   const isEdu     = view === 'education';
   const isYouth   = view === 'youth';
@@ -291,57 +282,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
         <div className={`body${bodyClass}`}>
           <div className="lcol">
 
-            {/* Employment stats row — employment view only */}
-            {view === 'employment' && (
-            <div className="stats-row emp-stats">
-              <div className="stat-card">
-                <div className="stat-lbl">Birmingham avg</div>
-                <div className="stat-val">{avg}%</div>
-                <div className="stat-sub">claimant rate</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-lbl">Highest ward</div>
-                <div className="stat-val txt">{sorted[0].ward_name}</div>
-                <div className="stat-sub">{sorted[0].claimant_rate}% claimant rate</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-lbl">Lowest ward</div>
-                <div className="stat-val txt">{sorted[sorted.length - 1].ward_name}</div>
-                <div className="stat-sub">{sorted[sorted.length - 1].claimant_rate}% claimant rate</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-lbl">Decile 9–10</div>
-                <div className="stat-val">{depCount}</div>
-                <div className="stat-sub">most deprived wards</div>
-              </div>
-            </div>
-            )}
-
-            {/* Crime stats row */}
-            {isCrime && (
-              <div className="stats-row crime-stats">
-                <div className="stat-card">
-                  <div className="stat-lbl">City avg crime</div>
-                  <div className="stat-val">{avgCrime}</div>
-                  <div className="stat-sub">per 1,000 pop</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">Highest ward</div>
-                  <div className="stat-val txt">{sortedCrime[0].ward_name}</div>
-                  <div className="stat-sub">{sortedCrime[0].crime_rate_per_1000.toFixed(1)}/1000</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">Lowest ward</div>
-                  <div className="stat-val txt">{sortedCrime[sortedCrime.length - 1].ward_name}</div>
-                  <div className="stat-sub">{sortedCrime[sortedCrime.length - 1].crime_rate_per_1000.toFixed(1)}/1000</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">Data source</div>
-                  <div className="stat-val txt" style={{ fontSize: 14 }}>{dsrc.crime === 'live' ? 'WMP Live' : 'Modelled'}</div>
-                  <div className="stat-sub">WMP via City Observatory</div>
-                </div>
-              </div>
-            )}
+            {/* Top stat-tile rows removed across all dashboards — per design review */}
 
             {/* Education stats row removed — per design review */}
 
@@ -474,7 +415,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   <EduMap wards={eduWards} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
                 )}
                 {/* Youth & NEET risk */}
-                {isYouth && <YouthDashboard wards={wards} neetData={neetData} selected={selectedYouth} onSelect={code => setSelectedYouth(prev => prev?.ward_code === code ? null : (wards.find(w => w.ward_code === code) ?? null))} />}
+                {isYouth && <YouthDashboard wards={wards} selected={selectedYouth} onSelect={code => setSelectedYouth(prev => prev?.ward_code === code ? null : (wards.find(w => w.ward_code === code) ?? null))} />}
                 {/* Housing Affordability */}
                 {isHousing && <HousingDashboard wards={housingWards} selected={selectedHousing} onSelect={code => setSelectedHousing(prev => prev === code ? null : code)} />}
                 {/* Ward Net Fiscal Balance */}

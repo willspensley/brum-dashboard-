@@ -127,12 +127,7 @@ export default function FiscalDashboard({ wards: fiscalWards, selected, onSelect
   const sorted = useMemo(() => [...fiscalWards].sort((a, b) => a.net - b.net), [fiscalWards]);
 
   const totalPop = fiscalWards.reduce((s, w) => s + w.population, 0);
-  const avgBenefits = Math.round(fiscalWards.reduce((s, w) => s + w.benefitPerHead * w.population, 0) / totalPop);
-  const avgRevenue  = Math.round(fiscalWards.reduce((s, w) => s + w.revenuePerHead  * w.population, 0) / totalPop);
-  const avgNet      = totalPop > 0 ? fiscalWards.reduce((s, w) => s + w.net * w.population, 0) / totalPop : 0;
-  const contributors = fiscalWards.filter(w => w.net >= 0);
-  const biggestContributor = [...fiscalWards].sort((a, b) => b.net - a.net)[0];
-  const biggestDeficit     = sorted[0];
+  const avgNet   = totalPop > 0 ? fiscalWards.reduce((s, w) => s + w.net * w.population, 0) / totalPop : 0;
 
   return (
     <div className="panel-body bw-fiscal" style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto' }}>
@@ -151,36 +146,7 @@ export default function FiscalDashboard({ wards: fiscalWards, selected, onSelect
         subtitle={`A ward-by-ward estimate of revenue raised against benefits and public services, showing the net fiscal position per head across all ${fiscalWards.length} Birmingham wards.`}
       />
 
-      {/* Stat bar */}
-      <div className="stat-bar">
-        <div className="stat-bar-item">
-          <div className="sb-val">{gbp(avgBenefits)}</div>
-          <div className="sb-lbl">City avg benefit spend</div>
-          <div className="sb-sub">per head · modelled</div>
-        </div>
-        <div className="stat-bar-item stat-bar-sep">
-          <div className="sb-val">{gbp(avgRevenue)}</div>
-          <div className="sb-lbl">City avg revenue</div>
-          <div className="sb-sub">per head · modelled</div>
-        </div>
-        <div className="stat-bar-item stat-bar-sep">
-          <div className="sb-val">{contributors.length}<span style={{ fontSize: 14, fontWeight: 400 }}>/{fiscalWards.length}</span></div>
-          <div className="sb-lbl">Net contributor wards</div>
-          <div className="sb-sub">fiscal surplus estimated</div>
-        </div>
-        <div className="stat-bar-item stat-bar-sep">
-          <div className="sb-val" style={{ fontSize: 13 }}>{biggestContributor?.ward_name}</div>
-          <div className="sb-lbl">Top contributor</div>
-          <div className="sb-sub">{gbp(biggestContributor?.net ?? 0)}/head surplus</div>
-        </div>
-        <div className="stat-bar-item stat-bar-sep">
-          <div className="sb-val" style={{ fontSize: 13 }}>{biggestDeficit?.ward_name}</div>
-          <div className="sb-lbl">Largest deficit</div>
-          <div className="sb-sub">{gbp(Math.abs(biggestDeficit?.net ?? 0))}/head</div>
-        </div>
-      </div>
-
-      <div style={{ padding: '0 18px 18px' }}>
+      <div style={{ padding: '18px 18px' }}>
 
         {/* DEMO banner */}
         <div style={{ margin: '14px 0 12px', padding: '10px 14px', background: 'rgba(239,183,0,0.08)', border: '1px solid rgba(239,183,0,0.4)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
