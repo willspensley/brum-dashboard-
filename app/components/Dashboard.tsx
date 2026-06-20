@@ -22,8 +22,10 @@ import NeetDetailPanel from '../youth/components/NeetDetailPanel';
 import HousingDashboard from '../housing/components/HousingDashboard';
 import HousingDetailPanel from '../housing/components/HousingDetailPanel';
 import { buildHousingWards } from '@/lib/synth-housing';
-import type { HousingWard } from '@/lib/types';
+import { buildFiscalWards } from '@/lib/synth-fiscal';
+import type { HousingWard, FiscalWard } from '@/lib/types';
 import FiscalDashboard from '../fiscal/components/FiscalDashboard';
+import FiscalDetailPanel from '../fiscal/components/FiscalDetailPanel';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
@@ -79,6 +81,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [selectedEdu, setSelectedEdu] = useState<EducationWard | null>(null);
   const [selectedYouth, setSelectedYouth] = useState<Ward | null>(null);
   const [selectedHousing, setSelectedHousing] = useState<string | null>(null);
+  const [selectedFiscal, setSelectedFiscal] = useState<string | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -148,6 +151,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const isFiscal  = view === 'fiscal';
 
   const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
+  const fiscalWards: FiscalWard[] = useMemo(() => buildFiscalWards(wards), [wards]);
 
   const bodyClass = isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
 
@@ -474,7 +478,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 {/* Housing Affordability */}
                 {isHousing && <HousingDashboard wards={housingWards} selected={selectedHousing} onSelect={code => setSelectedHousing(prev => prev === code ? null : code)} />}
                 {/* Ward Net Fiscal Balance */}
-                {isFiscal && <FiscalDashboard wards={wards} />}
+                {isFiscal && <FiscalDashboard wards={fiscalWards} selected={selectedFiscal} onSelect={code => setSelectedFiscal(prev => (!code || prev === code) ? null : code)} />}
               </div>
               <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
             </div>
@@ -530,6 +534,10 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             ) : isHousing ? (
               selectedHousing ? (
                 <HousingDetailPanel ward={housingWards.find(w => w.ward_code === selectedHousing)!} wards={housingWards} onClose={() => setSelectedHousing(null)} />
+              ) : emptyBull
+            ) : isFiscal ? (
+              selectedFiscal ? (
+                <FiscalDetailPanel ward={fiscalWards.find(w => w.ward_code === selectedFiscal)!} wards={fiscalWards} onClose={() => setSelectedFiscal(null)} />
               ) : emptyBull
             ) : selected ? (
               isCrime ? (
