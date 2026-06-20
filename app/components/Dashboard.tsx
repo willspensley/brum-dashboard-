@@ -77,7 +77,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [selectedEdu, setSelectedEdu] = useState<EducationWard | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
-  const [showSources, setShowSources] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
@@ -137,12 +136,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   // Crime stats
   const avgCrime    = (wards.reduce((s, w) => s + w.crime_rate_per_1000, 0) / wards.length).toFixed(1);
   const sortedCrime = [...wards].sort((a, b) => b.crime_rate_per_1000 - a.crime_rate_per_1000);
-
-  // Education stats
-  const sortedEdu   = [...eduWards].sort((a, b) => b.qual_none - a.qual_none);
-  const avgNone     = (eduWards.reduce((s, w) => s + w.qual_none, 0) / eduWards.length).toFixed(1);
-  const avgL4       = (eduWards.reduce((s, w) => s + w.qual_level4plus, 0) / eduWards.length).toFixed(1);
-  const highEduDep  = eduWards.filter(w => w.imd_edu_decile >= 8).length;
 
   const isCrime   = view === 'crime';
   const isEdu     = view === 'education';
@@ -255,138 +248,28 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment Deprivation'}
                 </div>
                 <div className="hdr-sub">
-                  {isEdu ? '68 wards · Census 2021 · IMD 2025 Education Domain'
-                    : isYouth ? '68 wards · NOMIS 16–24 · IMD 2025 · Census 2021'
-                    : isHousing ? '68 wards · Census 2021 · IMD 2025 · modelled estimates'
-                    : isFiscal ? '68 wards · revenue, benefits & services per head · modelled estimates'
-                    : '68 wards · IMD 2025 · NOMIS · Census 2021 · GVA 2022'}
+                  {isEdu ? '68 wards · qualifications & skills'
+                    : isYouth ? '68 wards · 16–24 NEET risk'
+                    : isHousing ? '68 wards · affordability pressure · modelled'
+                    : isFiscal ? '68 wards · net fiscal balance per head · modelled'
+                    : isCrime ? '68 wards · recorded offences'
+                    : '68 wards · claimant rate & deprivation'}
                 </div>
               </div>
             </div>
             <div className="hdr-right">
-            {isFiscal ? (
-              <>
-                <span className="dsbadge" title="Ward earnings, IMD 2025 and Census 2021 age profiles used as modelling inputs">
-                  Earnings &amp; IMD <span className="dot-cache">●</span>
-                </span>
-                <span className="dsbadge" title="Revenue, benefit and service spend per head are all modelled — DWP Stat-Xplore integration pending">
-                  All figures <span className="dot-cache">●</span> modelled
-                </span>
-              </>
-            ) : isHousing ? (
-              <>
-                <span className="dsbadge" title="Census 2021 tenure profiles — embedded ward-level estimates">
-                  Census 2021 <span className="dot-cache">●</span>
-                </span>
-                <span className="dsbadge" title="IMD 2025 employment domain used as deprivation proxy">
-                  IMD 2025 <span className="dot-cache">●</span>
-                </span>
-                <span className="dsbadge" title="All housing metrics are modelled estimates — not official statistics">
-                  est <span className="dot-cache">●</span> modelled
-                </span>
-              </>
-            ) : isEdu ? (
-              <>
-                <span className="dsbadge" title={eduMeta.quals.source === 'live' ? `City Observatory — ${eduMeta.quals.wards} wards` : eduMeta.quals.err ?? 'Embedded Census 2021 snapshot'}>
-                  Qualifications <span className={eduMeta.quals.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title={eduMeta.imd.source === 'live' ? `IMD 2025 edu — ${eduMeta.imd.wards} wards` : eduMeta.imd.err ?? 'Embedded IMD scores'}>
-                  IMD 2025 <span className={eduMeta.imd.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-              </>
-            ) : isYouth ? (
-              <>
-                <span className="dsbadge" title={dsrc.neet === 'live' ? `NOMIS 16–24 claimant count — live` : 'Youth claimants modelled from total claimant rate'}>
-                  NOMIS 16–24 <span className={dsrc.neet === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title={`Birmingham NEET ${neetData.bham_year}: ${neetData.bham_neet_pct ?? 'est. 6–7'}% [${neetData.source}]`}>
-                  NEET {neetData.bham_year} <span className={neetData.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title="NEET risk index is a modelled composite — not an official rate">
-                  Risk index <span className="dot-cache">●</span> modelled
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="dsbadge" title={dsrc.imd === 'live' ? 'IMD 2025 — live from City Observatory' : 'IMD embedded cache'}>
-                  IMD 2025 <span className={dsrc.imd === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title={dsrc.nomis === 'live' ? `NOMIS ${nomisDate} — fetched live` : 'NOMIS embedded Jan 2026 cache'}>
-                  NOMIS {nomisDate} <span className={dsrc.nomis === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title={dsrc.crime === 'live' ? 'WMP Crime — live from City Observatory' : 'Crime rates modelled from composite score'}>
-                  Crime <span className={dsrc.crime === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-                <span className="dsbadge" title={dsrc.gva === 'live' ? 'GVA 2022 — live, per-head computed' : 'GVA synthesised from ward bands'}>
-                  GVA 2022 <span className={dsrc.gva === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-                </span>
-              </>
-            )}
-            <button className="refresh-btn" onClick={() => setShowSources(s => !s)}>
-              <span>⌥</span> sources
-            </button>
-            <button className="print-btn" onClick={() => window.print()}>⎙ print</button>
+              <a href="/sources" className="refresh-btn"><span>⌥</span> Sources</a>
+              <button className="print-btn" onClick={() => window.print()}>⎙ print</button>
           </div>
 
-          {showSources && (
-            <div className="sources-drawer">
-              <div className="sources-hdr">
-                <h3>Data sources</h3>
-                <button className="x" onClick={() => setShowSources(false)}>×</button>
-              </div>
-              {isEdu ? (
-                EDU_SOURCES.map(s => (
-                  <div className="src-row" key={s.nm}>
-                    <div className="src-row-top">
-                      <span className="src-name">{s.nm}</span>
-                      <span className="src-status src-static">Census 2021 / IMD 2025</span>
-                    </div>
-                    <div className="src-meta">
-                      {s.desc}<br />
-                      <span style={{ opacity: 0.7 }}>{s.pub} · {s.ep}</span>
-                      {' · '}
-                      <a href={s.href} target="_blank" rel="noopener noreferrer">View dataset ↗</a>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                [
-                  { nm: 'NOMIS — Claimant Count', ep: 'NM_162_1 · ward geography', pub: 'ONS · DWP', st: dsrc.nomis, desc: dsmeta.nomis.err ? `Error: ${dsmeta.nomis.err}. Using embedded Jan 2026 snapshot.` : dsrc.nomis === 'live' ? `${dsmeta.nomis.count} wards · ${dsmeta.nomis.date}` : 'Embedded Jan 2026 snapshot — 68 wards.' },
-                  { nm: 'IMD 2025 — Employment Domain', ep: 'imd-indices-of-deprivation-2025-wmca-lsoa-2021', pub: 'Birmingham City Observatory', st: dsrc.imd, desc: dsmeta.imd.err ? `Error: ${dsmeta.imd.err}. Using embedded IMD 2025.` : dsrc.imd === 'live' ? `${dsmeta.imd.lsoas} LSOAs → ${dsmeta.imd.wards} wards` : 'Embedded IMD 2025 employment scores.' },
-                  { nm: 'GVA 2022 — Per-Head Output', ep: 'gross-value-added-gva-all-industries-birmingham-wards', pub: 'Birmingham City Observatory', st: dsrc.gva, desc: dsmeta.gva.err ? `Error: ${dsmeta.gva.err}. Synthesised from ward character bands.` : dsrc.gva === 'live' ? `${dsmeta.gva.count} wards · joined with Census population` : 'Synthesised from ward character bands.' },
-                  { nm: 'ONS Ward Boundaries', ep: 'Wards Dec 2022 BGC', pub: 'ONS', st: 'static' as const, desc: 'Fetched on demand when Map tab opens. GeoJSON, ~69 features for E08000025.' },
-                  { nm: 'Census 2021 — Inactivity & Skills', ep: 'TS066, TS067 (modelled)', pub: 'ONS Census 2021', st: 'static' as const, desc: 'Inactivity rates embedded. Youth unemployment, UC %, vacancies are modelled estimates.' },
-                ].map(r => (
-                  <div className="src-row" key={r.nm}>
-                    <div className="src-row-top">
-                      <span className="src-name">{r.nm}</span>
-                      {r.st === 'static' ? <span className="src-status src-static">EMBEDDED</span> :
-                        r.st === 'live' ? <span className="src-status src-live">● LIVE</span> :
-                          <span className="src-status src-cache">● CACHED</span>}
-                    </div>
-                    <div className="src-meta">{r.desc}<br /><span style={{ opacity: 0.7 }}>{r.pub} · {r.ep}</span></div>
-                  </div>
-                ))
-              )}
-              <div className="src-foot">
-                {isEdu
-                  ? 'All education data is publicly available. No API key required. Data loaded server-side with a 24hr cache.'
-                  : <><b style={{ color: 'var(--q-prosp)' }}>●</b> Live = fetched server-side this render.{' '}<b style={{ color: 'var(--accent)' }}>●</b> Cached = endpoint unreachable, embedded snapshot used.</>}
-                <div style={{ marginTop: 8 }}>
-                  <a href="/sources" style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--ink)', textDecoration: 'underline', letterSpacing: '.04em' }}>
-                    View all sources ↗
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         <div className="hdr-dancetty" aria-hidden="true" />
 
         <div className={`body${bodyClass}`}>
           <div className="lcol">
 
-            {/* Employment stats row — hidden in ozzy-mode, crime-mode, edu-mode via CSS */}
+            {/* Employment stats row — employment view only */}
+            {view === 'employment' && (
             <div className="stats-row emp-stats">
               <div className="stat-card">
                 <div className="stat-lbl">Birmingham avg</div>
@@ -409,6 +292,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 <div className="stat-sub">most deprived wards</div>
               </div>
             </div>
+            )}
 
             {/* Crime stats row */}
             {isCrime && (
@@ -436,31 +320,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
             )}
 
-            {/* Education stats row */}
-            {isEdu && (
-              <div className="stats-row edu-stats">
-                <div className="stat-card">
-                  <div className="stat-lbl">Birmingham avg</div>
-                  <div className="stat-val">{avgNone}%</div>
-                  <div className="stat-sub">no qualifications</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">Highest no-quals ward</div>
-                  <div className="stat-val txt">{sortedEdu[0]?.ward_name}</div>
-                  <div className="stat-sub">{sortedEdu[0]?.qual_none}% no qualifications</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">Birmingham avg</div>
-                  <div className="stat-val">{avgL4}%</div>
-                  <div className="stat-sub">Level 4+ (degree)</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-lbl">IMD edu decile 8–10</div>
-                  <div className="stat-val">{highEduDep}</div>
-                  <div className="stat-sub">most skills-deprived wards</div>
-                </div>
-              </div>
-            )}
+            {/* Education stats row removed — per design review */}
 
             {/* Breadcrumb + legend — employment */}
             {view === 'employment' && (

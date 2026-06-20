@@ -310,7 +310,7 @@ export default function AboutPage() {
       {/* OPEN SOURCE / CONTRIBUTE — strong CTA section */}
       <section id="contribute" style={{
         scrollMarginTop: 80,
-        background: '#faf9f5',
+        background: 'var(--surface)',
         padding: '88px 32px 88px',
         position: 'relative',
         overflow: 'hidden',

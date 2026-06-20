@@ -1,5 +1,5 @@
 import type { Ward, DataSources } from '@/lib/types';
-import { dc, Q_COLORS, Q_LABELS, rankOf, quadrantNarrative, quadrantSummary } from '@/lib/constants';
+import { dc, Q_COLORS, rankOf, quadrantNarrative, quadrantSummary } from '@/lib/constants';
 import { extras } from '@/lib/synth';
 import TrendChart from './TrendChart';
 
@@ -42,7 +42,6 @@ export default function DetailPanel({ ward: w, wards, dsrc, isPinned, onPin, onC
         </div>
 
         <div className="q-banner" style={{ borderColor: qCol, background: qCol + '0d' }}>
-          <div className="q-banner-ttl" style={{ color: qCol }}>{Q_LABELS[w.quadrant]}</div>
           <div className="q-banner-txt">{quadrantSummary(wards, w)}</div>
         </div>
 

@@ -2,6 +2,10 @@
 import { useState, useMemo } from 'react';
 import type { Ward, FiscalWard } from '@/lib/types';
 import { buildFiscalWards } from '@/lib/synth-fiscal';
+import DashboardHeader from '@/app/components/brand/DashboardHeader';
+import SectionHeader from '@/app/components/brand/SectionHeader';
+import DancettyDivider from '@/app/components/brand/DancettyDivider';
+import CrestWatermark from '@/app/components/brand/CrestWatermark';
 
 const COL = {
   surplus:   '#1a3a2a',
@@ -10,7 +14,7 @@ const COL = {
   deficitBg: 'rgba(58,26,26,0.07)',
   revenue:   '#1a2a3a',
   services:  '#2a3a4a',
-  gold:      '#c8a84b',
+  gold:      '#efb700',
   line:      'rgba(14,15,17,0.10)',
 };
 
@@ -253,6 +257,13 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
         }
       `}</style>
 
+      {/* Brand header */}
+      <DashboardHeader
+        eyebrow="Birmingham · Fiscal Balance"
+        title="Who pays in, who draws down"
+        subtitle={`A ward-by-ward estimate of revenue raised against benefits and public services, showing the net fiscal position per head across all ${fiscalWards.length} Birmingham wards.`}
+      />
+
       {/* Stat bar */}
       <div className="stat-bar">
         <div className="stat-bar-item">
@@ -285,8 +296,8 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
       <div style={{ padding: '0 18px 18px' }}>
 
         {/* DEMO banner */}
-        <div style={{ margin: '14px 0 12px', padding: '10px 14px', background: 'rgba(200,168,75,0.08)', border: '1px solid rgba(200,168,75,0.35)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: COL.gold, fontSize: 11, flexShrink: 0, paddingTop: 1 }}>DEMO</span>
+        <div style={{ margin: '14px 0 12px', padding: '10px 14px', background: 'rgba(239,183,0,0.08)', border: '1px solid rgba(239,183,0,0.4)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: '#9a7a00', fontSize: 11, flexShrink: 0, paddingTop: 1, letterSpacing: '.08em' }}>DEMO</span>
           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.5 }}>
             <strong style={{ color: 'var(--ink)' }}>All £ figures are modelled estimates</strong> — synthesised from ward earnings, deprivation scores and demographic profiles, not official statistics. They show how the model behaves, not a real result. Wiring DWP Stat-Xplore, HMRC and ONS sources (see provenance table below) would replace these with real ward-level figures.
           </p>
@@ -299,7 +310,7 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
             id="fiscal-wardpick"
             value={selected ?? ''}
             onChange={e => setSelected(e.target.value)}
-            style={{ fontSize: 12.5, padding: '6px 10px', border: '1px solid rgba(14,15,17,0.15)', background: 'var(--paper)', color: 'var(--ink)', minWidth: 230, fontFamily: 'var(--mono)', fontWeight: 600 }}
+            style={{ fontSize: 12.5, padding: '6px 10px', border: '1px solid rgba(14,15,17,0.15)', background: 'var(--surface)', color: 'var(--ink)', minWidth: 230, fontFamily: 'var(--mono)', fontWeight: 600 }}
           >
             {[...fiscalWards].sort((a, b) => a.ward_name.localeCompare(b.ward_name)).map(w => (
               <option key={w.ward_code} value={w.ward_code}>{w.ward_name}</option>
@@ -312,8 +323,8 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
         <div className="bw-fiscal-grid" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr', alignItems: 'start' }}>
 
           {/* Left: all wards bars */}
-          <div style={{ background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: 14 }}>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 15, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>Net fiscal balance per head</div>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: 14 }}>
+            <SectionHeader eyebrow="All wards · ranked" title="Net fiscal balance per head" style={{ marginBottom: 8 }} />
             <p style={{ fontSize: 11, color: 'var(--muted)', margin: '0 0 12px', lineHeight: 1.4 }}>
               <span style={{ color: COL.deficit, fontWeight: 700 }}>● In the red</span> = net recipient ·{' '}
               <span style={{ color: COL.surplus, fontWeight: 700 }}>● In the black</span> = net contributor
@@ -353,7 +364,7 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
                 { label: 'Revenue / head',  value: gbp(ward.revenuePerHead), color: COL.revenue },
                 { label: 'Services / head', value: gbp(ward.servicePerHead), color: COL.services },
               ].map(s => (
-                <div key={s.label} style={{ background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: '10px 12px' }}>
+                <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: '10px 12px' }}>
                   <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 3 }}>{s.label}</div>
                   <div style={{ fontSize: 17, fontFamily: 'var(--mono)', fontWeight: 700, color: s.color ?? 'var(--ink)' }}>{s.value}</div>
                 </div>
@@ -361,9 +372,8 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
             </div>
 
             {/* Bridge waterfall */}
-            <div style={{ background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: 14 }}>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 600, marginBottom: 2 }}>How the net position is built</div>
-              <p style={{ fontSize: 11, color: 'var(--muted)', margin: '0 0 12px' }}>Per head, per year · dashed line marks £0</p>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: 14 }}>
+              <SectionHeader eyebrow={ward.ward_name} title="How the net position is built" subtitle="Per head, per year · dashed line marks £0" size={14} />
               <Bridge ward={ward} />
             </div>
           </div>
@@ -372,13 +382,13 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
         {/* Second row: breakdown + age */}
         <div className="bw-fiscal-grid2" style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr', marginTop: 16 }}>
 
-          <div style={{ background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: 14 }}>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Benefit spend by type — {ward.ward_name}</div>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: 14 }}>
+            <SectionHeader eyebrow={ward.ward_name} title="Benefit spend by type" size={14} />
             <BenefitBreakdown ward={ward} />
           </div>
 
-          <div style={{ background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: 14 }}>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Age structure &amp; what&rsquo;s driving the result</div>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: 14 }}>
+            <SectionHeader eyebrow={ward.ward_name} title="Age structure & what's driving the result" size={14} />
             <AgeBar ward={ward} />
             <p style={{ fontSize: 12.5, color: 'var(--ink)', lineHeight: 1.6, marginTop: 14, marginBottom: 10 }}>{ward.driver}</p>
             <div style={{ background: 'rgba(14,15,17,0.04)', padding: '10px 12px', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.5 }}>
@@ -390,23 +400,28 @@ export default function FiscalDashboard({ wards }: { wards: Ward[] }) {
         </div>
 
         {/* Interpretation callout */}
-        <div style={{ marginTop: 16, padding: '16px 18px', background: 'var(--herald-navy, #1a2a3a)', color: '#e7eaef' }}>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 15, fontWeight: 600, marginBottom: 8, color: '#fff' }}>How to read this — before drawing conclusions</div>
+        <DancettyDivider style={{ marginTop: 22, marginBottom: 16 }} />
+        <div style={{ position: 'relative', overflow: 'hidden', padding: '18px 20px', background: 'var(--herald-navy)', color: '#e7eaef' }}>
+          <CrestWatermark width={220} opacity={0.07} style={{ bottom: -28, right: -24 }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+          <SectionHeader tone="dark" eyebrow="How to read this" title="Before drawing conclusions" size={16} />
           <p style={{ fontSize: 12.5, lineHeight: 1.65, margin: 0, color: '#c5ccd6' }}>
             A &ldquo;net recipient&rdquo; ward is usually telling you about its <strong style={{ color: '#fff' }}>age structure and economic base, not the character of its residents</strong>. In the official ONS data, about{' '}
             <strong style={{ color: '#fff' }}>89% of retired people</strong> live in net-recipient households versus around{' '}
             <strong style={{ color: '#fff' }}>46% of non-retired people</strong> — almost everyone is a net recipient as a child and in retirement, and a net contributor during working life. The State Pension, the single largest transfer, goes to people who paid in across a full career — it should never be read as a &ldquo;loss.&rdquo; Because Income Tax, NI and VAT can only be split to ward level by modelling, the revenue figures here are estimates, not official statistics.
           </p>
+          </div>
         </div>
 
         {/* Provenance table */}
-        <div style={{ marginTop: 16, background: 'var(--paper)', border: '1px solid rgba(14,15,17,0.08)', padding: 14, overflowX: 'auto' }}>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 15, fontWeight: 600, marginBottom: 3 }}>Data sources &amp; provenance</div>
-          <p style={{ fontSize: 11, color: 'var(--muted)', margin: '0 0 12px', lineHeight: 1.4 }}>
-            Every layer of the calculation — whether each input is a live source, a modelled estimate, or still behind a login.
-          </p>
+        <div style={{ marginTop: 16, background: 'var(--surface)', border: '1px solid var(--border-solid)', borderRadius: 'var(--radius)', padding: 14, overflowX: 'auto' }}>
+          <SectionHeader
+            eyebrow="Data lineage"
+            title="Data sources & provenance"
+            subtitle="Every layer of the calculation, and whether each input is a live source, a modelled estimate, or still behind a login."
+          />
           <div style={{ minWidth: 600 }}>
-            <div style={{ display: 'flex', gap: 10, padding: '0 0 8px', borderBottom: '2px solid rgba(14,15,17,0.12)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--muted)', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+            <div style={{ display: 'flex', gap: 10, padding: '0 0 8px', borderBottom: '2px solid var(--herald-gold)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--muted)', fontWeight: 700, fontFamily: 'var(--mono)' }}>
               <span style={{ width: 160, flexShrink: 0 }}>Layer</span>
               <span style={{ flex: 1.3 }}>What it provides</span>
               <span style={{ flex: 1.4 }}>Source</span>
