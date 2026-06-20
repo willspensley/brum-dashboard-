@@ -18,7 +18,9 @@ import QualTable from '../education/components/QualTable';
 import QualBars from '../education/components/QualBars';
 import EduDetailPanel from '../education/components/EduDetailPanel';
 import YouthDashboard from '../youth/components/YouthDashboard';
+import NeetDetailPanel from '../youth/components/NeetDetailPanel';
 import HousingDashboard from '../housing/components/HousingDashboard';
+import HousingDetailPanel from '../housing/components/HousingDetailPanel';
 import { buildHousingWards } from '@/lib/synth-housing';
 import type { HousingWard } from '@/lib/types';
 import FiscalDashboard from '../fiscal/components/FiscalDashboard';
@@ -75,6 +77,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [eduSub, setEduSub] = useState<EduSub>('edu-grid');
   const [selected, setSelected] = useState<Ward | null>(null);
   const [selectedEdu, setSelectedEdu] = useState<EducationWard | null>(null);
+  const [selectedYouth, setSelectedYouth] = useState<Ward | null>(null);
+  const [selectedHousing, setSelectedHousing] = useState<string | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -146,6 +150,21 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
 
   const bodyClass = isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
+
+  const emptyBull = (
+    <div className="r-empty">
+      <div className="ascii-ward">{`┌─────────────────────┐
+ │  (\\/)  (\\/)         │
+ │   \\  \\/  /          │
+ │ .--\\----/--.        │
+ │/  ( o)(o)  \\        │
+ │|    (---)   |       │
+ │ \\___________/       │
+ └─────────────────────┘`}</div>
+      <p>Select any ward to see a detailed breakdown.</p>
+      <p style={{ fontFamily: 'var(--mono)', fontSize: 9, fontStyle: 'normal', color: 'rgba(14,15,17,.18)', letterSpacing: '.18em' }}>THE BULL OF BIRMINGHAM</p>
+    </div>
+  );
 
   return (
     <>
@@ -451,9 +470,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   <EduMap wards={eduWards} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
                 )}
                 {/* Youth & NEET risk */}
-                {isYouth && <YouthDashboard wards={wards} neetData={neetData} />}
+                {isYouth && <YouthDashboard wards={wards} neetData={neetData} selected={selectedYouth} onSelect={code => setSelectedYouth(prev => prev?.ward_code === code ? null : (wards.find(w => w.ward_code === code) ?? null))} />}
                 {/* Housing Affordability */}
-                {isHousing && <HousingDashboard wards={housingWards} />}
+                {isHousing && <HousingDashboard wards={housingWards} selected={selectedHousing} onSelect={code => setSelectedHousing(prev => prev === code ? null : code)} />}
                 {/* Ward Net Fiscal Balance */}
                 {isFiscal && <FiscalDashboard wards={wards} />}
               </div>
@@ -504,6 +523,14 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   </div>
                 </>
               )
+            ) : isYouth ? (
+              selectedYouth ? (
+                <NeetDetailPanel ward={selectedYouth} wards={wards} onClose={() => setSelectedYouth(null)} />
+              ) : emptyBull
+            ) : isHousing ? (
+              selectedHousing ? (
+                <HousingDetailPanel ward={housingWards.find(w => w.ward_code === selectedHousing)!} wards={housingWards} onClose={() => setSelectedHousing(null)} />
+              ) : emptyBull
             ) : selected ? (
               isCrime ? (
                 <CrimeDetailPanel
@@ -524,18 +551,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 />
               )
             ) : (
-              <div className="r-empty">
-                <div className="ascii-ward">{`┌─────────────────────┐
- │  (\\/)  (\\/)         │
- │   \\  \\/  /          │
- │ .--\\----/--.        │
- │/  ( o)(o)  \\        │
- │|    (---)   |       │
- │ \\___________/       │
- └─────────────────────┘`}</div>
-                <p>Select any ward to see a detailed breakdown.</p>
-                <p style={{ fontFamily: 'var(--mono)', fontSize: 9, fontStyle: 'normal', color: 'rgba(14,15,17,.18)', letterSpacing: '.18em' }}>THE BULL OF BIRMINGHAM</p>
-              </div>
+              emptyBull
             )}
           </div>
         </div>

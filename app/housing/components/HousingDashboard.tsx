@@ -3,19 +3,17 @@ import { useState } from 'react';
 import type { HousingWard } from '@/lib/types';
 import HousingGrid from './HousingGrid';
 import HousingTable from './HousingTable';
-import HousingDetailPanel from './HousingDetailPanel';
 
 type Tab = 'grid' | 'table';
 
 interface Props {
   wards: HousingWard[];
+  selected: string | null;
+  onSelect: (code: string) => void;
 }
 
-export default function HousingDashboard({ wards }: Props) {
-  const [tab, setTab]         = useState<Tab>('grid');
-  const [selected, setSelected] = useState<string | null>(null);
-
-  const selectedWard = selected ? (wards.find(w => w.ward_code === selected) ?? null) : null;
+export default function HousingDashboard({ wards, selected, onSelect }: Props) {
+  const [tab, setTab] = useState<Tab>('grid');
 
   const avgPrice    = Math.round(wards.reduce((s, w) => s + w.median_house_price_k, 0) / wards.length);
   const avgPTI      = (wards.reduce((s, w) => s + w.price_to_income, 0) / wards.length).toFixed(1);
@@ -24,12 +22,8 @@ export default function HousingDashboard({ wards }: Props) {
   const highPressure = wards.filter(w => w.housing_pressure_decile >= 9).length;
   const highestWard  = [...wards].sort((a, b) => b.housing_pressure_score - a.housing_pressure_score)[0];
 
-  const handleSelect = (code: string) => {
-    setSelected(prev => prev === code ? null : code);
-  };
-
   return (
-    <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
       {/* Headline stats */}
       <div className="stat-bar">
@@ -72,23 +66,10 @@ export default function HousingDashboard({ wards }: Props) {
         </div>
       </div>
 
-      {/* Content + detail */}
-      <div className="panel-split" style={{ flex: 1, overflow: 'hidden' }}>
-        <div className="panel-main" style={{ overflow: 'auto' }}>
-          {tab === 'grid' && (
-            <HousingGrid wards={wards} selected={selected} onSelect={handleSelect} />
-          )}
-          {tab === 'table' && (
-            <HousingTable wards={wards} selected={selected} onSelect={handleSelect} />
-          )}
-        </div>
-        {selectedWard && (
-          <HousingDetailPanel
-            ward={selectedWard}
-            wards={wards}
-            onClose={() => setSelected(null)}
-          />
-        )}
+      {/* Grid / table — selection flows up to the shared right-side detail panel */}
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        {tab === 'grid' && <HousingGrid wards={wards} selected={selected} onSelect={onSelect} />}
+        {tab === 'table' && <HousingTable wards={wards} selected={selected} onSelect={onSelect} />}
       </div>
 
     </div>

@@ -28,12 +28,10 @@ export default function HousingDetailPanel({ ward: w, wards, onClose }: Props) {
   const cityAvgOC    = avg(wards, 'overcrowding_pct').toFixed(1);
   const cityAvgPTI   = avg(wards, 'price_to_income').toFixed(1);
 
-  // Normalised components for composite breakdown
-  const ocN  = normOf(w.overcrowding_pct, wards, 'overcrowding_pct');
-  const riN  = normOf(w.rent_income_pct,  wards, 'rent_income_pct');
-  const piN  = normOf(w.price_to_income,  wards, 'price_to_income');
+  const ocN = normOf(w.overcrowding_pct, wards, 'overcrowding_pct');
+  const riN = normOf(w.rent_income_pct,  wards, 'rent_income_pct');
+  const piN = normOf(w.price_to_income,  wards, 'price_to_income');
 
-  // Comparative meter positions (% of max)
   const pricePos    = normOf(w.median_house_price_k, wards, 'median_house_price_k') * 100;
   const avgPricePos = normOf(cityAvgPrice,           wards, 'median_house_price_k') * 100;
   const rentPos     = normOf(w.private_rent_pcm,     wards, 'private_rent_pcm')     * 100;
@@ -41,94 +39,90 @@ export default function HousingDetailPanel({ ward: w, wards, onClose }: Props) {
   const ocPos       = normOf(w.overcrowding_pct,     wards, 'overcrowding_pct')     * 100;
   const avgOCPos    = normOf(parseFloat(cityAvgOC),  wards, 'overcrowding_pct')     * 100;
 
-  // Tenure stacked bar widths (normalised to sum = 100%)
   const tenureTotal = w.owner_occupation_pct + w.social_rented_pct + w.private_rented_pct;
   const ownerW   = (w.owner_occupation_pct / tenureTotal) * 100;
   const socialW  = (w.social_rented_pct    / tenureTotal) * 100;
   const privateW = (w.private_rented_pct   / tenureTotal) * 100;
 
   const meters = [
-    { lbl: 'House price', pos: pricePos,  ref: avgPricePos, val: `£${w.median_house_price_k}k` },
-    { lbl: 'Monthly rent', pos: rentPos,  ref: avgRentPos,  val: `£${w.private_rent_pcm}` },
-    { lbl: 'Overcrowding', pos: ocPos,    ref: avgOCPos,    val: `${w.overcrowding_pct}%` },
+    { lbl: 'House price', pos: pricePos, ref: avgPricePos, val: `£${w.median_house_price_k}k` },
+    { lbl: 'Monthly rent', pos: rentPos, ref: avgRentPos, val: `£${w.private_rent_pcm}` },
+    { lbl: 'Overcrowding', pos: ocPos,   ref: avgOCPos,   val: `${w.overcrowding_pct}%` },
   ];
 
   return (
-    <div className="detail-panel">
-      <button className="dp-close" onClick={onClose}>×</button>
-
-      <div className="dp-hdr">
-        <div className="dp-eyebrow">Housing profile</div>
-        <div className="dp-title">{w.ward_name}</div>
-        <div className="dp-rank-row">
+    <div>
+      <div className="d-hdr">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <span className="dp-rank">#{w.housing_pressure_rank}</span>
-            <span className="dp-rank-of"> of 68</span>
+            <div className="d-name">{w.ward_name}</div>
+            <div className="d-sub">{w.ward_code} · pressure decile {w.housing_pressure_decile}/10 · rank #{w.housing_pressure_rank}/68</div>
           </div>
-          <span className="dp-decile-pill" style={{ background: color }}>
-            Decile {w.housing_pressure_decile}
-          </span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 18, padding: 2 }}>×</button>
         </div>
-      </div>
 
-      <div className="dp-section">
-        <div className="dp-section-ttl">Affordability</div>
-        <div className="dp-stats">
-          <div className="dp-stat">
-            <div className="dp-stat-val">£{w.median_house_price_k}k</div>
-            <div className="dp-stat-lbl">Median house price</div>
-            <div className="dp-stat-sub">city avg £{cityAvgPrice}k</div>
-          </div>
-          <div className="dp-stat">
-            <div className="dp-stat-val">{w.price_to_income}×</div>
-            <div className="dp-stat-lbl">Price-to-income</div>
-            <div className="dp-stat-sub">city avg {cityAvgPTI}× · earnings £{w.earnings}k</div>
-          </div>
-          <div className="dp-stat">
-            <div className="dp-stat-val">£{w.private_rent_pcm}</div>
-            <div className="dp-stat-lbl">Median rent / month</div>
-            <div className="dp-stat-sub">city avg £{cityAvgRent}</div>
-          </div>
-          <div className="dp-stat">
-            <div className="dp-stat-val">{w.rent_income_pct}%</div>
-            <div className="dp-stat-lbl">Rent-to-income</div>
-            <div className="dp-stat-sub">city avg {cityAvgRI}% · 30% = stress threshold</div>
+        <div className="q-banner" style={{ borderColor: color, background: color + '0d' }}>
+          <div className="q-banner-txt">
+            Housing pressure decile <strong>{w.housing_pressure_decile}/10</strong> — a modelled composite of overcrowding, rent-to-income and price-to-income. Not an official measure.
           </div>
         </div>
-      </div>
 
-      <div className="dp-section">
-        <div className="dp-section-ttl">Housing conditions</div>
-        <div className="dp-stats">
-          <div className="dp-stat">
-            <div className="dp-stat-val">{w.overcrowding_pct}%</div>
-            <div className="dp-stat-lbl">Households overcrowded</div>
-            <div className="dp-stat-sub">city avg {cityAvgOC}%</div>
+        <div className="d-chips">
+          <div className="d-chip">
+            <div className="d-chip-lbl">House price</div>
+            <div className="d-chip-val">£{w.median_house_price_k}k</div>
+            <div className="d-chip-sub">avg £{cityAvgPrice}k</div>
           </div>
-          <div className="dp-stat">
-            <div className="dp-stat-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
-            <div className="dp-stat-lbl">IMD employment score</div>
-            <div className="dp-stat-sub">deprivation proxy · 0–100%</div>
+          <div className="d-chip">
+            <div className="d-chip-lbl">Price to income</div>
+            <div className="d-chip-val">{w.price_to_income}×</div>
+            <div className="d-chip-sub">avg {cityAvgPTI}×</div>
+          </div>
+          <div className="d-chip">
+            <div className="d-chip-lbl">Rent / month</div>
+            <div className="d-chip-val">£{w.private_rent_pcm}</div>
+            <div className="d-chip-sub">avg £{cityAvgRent}</div>
+          </div>
+          <div className="d-chip">
+            <div className="d-chip-lbl">Rent to income</div>
+            <div className="d-chip-val" style={{ color: w.rent_income_pct > 30 ? 'var(--herald-red)' : undefined }}>{w.rent_income_pct}%</div>
+            <div className="d-chip-sub">avg {cityAvgRI}% · 30% stress</div>
           </div>
         </div>
       </div>
 
-      <div className="dp-section">
-        <div className="dp-section-ttl">Tenure mix</div>
-        <div style={{ display: 'flex', height: 14, width: '100%', overflow: 'hidden', marginBottom: 8 }}>
-          <div style={{ width: `${ownerW}%`, background: '#1a3a2a' }} />
-          <div style={{ width: `${socialW}%`, background: '#7d4e36' }} />
-          <div style={{ width: `${privateW}%`, background: '#2a3a4a' }} />
+      <div className="d-sec">
+        <div className="d-sec-ttl">Housing conditions</div>
+        <div className="extra-metrics">
+          <div className="em-card">
+            <div className="em-lbl">Overcrowded</div>
+            <div className="em-val">{w.overcrowding_pct}%</div>
+            <div className="em-sub">city avg {cityAvgOC}%</div>
+          </div>
+          <div className="em-card">
+            <div className="em-lbl">IMD employment</div>
+            <div className="em-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
+            <div className="em-sub">deprivation proxy</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="d-sec">
+        <div className="d-sec-ttl">Tenure mix</div>
+        <div style={{ display: 'flex', height: 14, width: '100%', overflow: 'hidden', marginBottom: 8, borderRadius: 'var(--radius)' }}>
+          <div style={{ width: `${ownerW}%`, background: 'var(--q-prosp)' }} />
+          <div style={{ width: `${socialW}%`, background: 'var(--herald-blue)' }} />
+          <div style={{ width: `${privateW}%`, background: 'var(--muted2)' }} />
         </div>
         <div style={{ display: 'flex', gap: 12, fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)', flexWrap: 'wrap' }}>
-          <span><span style={{ color: '#1a3a2a' }}>■</span> Owned {w.owner_occupation_pct}%</span>
-          <span><span style={{ color: '#7d4e36' }}>■</span> Social {w.social_rented_pct}%</span>
-          <span><span style={{ color: '#2a3a4a' }}>■</span> Private {w.private_rented_pct}%</span>
+          <span><span style={{ color: 'var(--q-prosp)' }}>■</span> Owned {w.owner_occupation_pct}%</span>
+          <span><span style={{ color: 'var(--herald-blue)' }}>■</span> Social {w.social_rented_pct}%</span>
+          <span><span style={{ color: 'var(--muted2)' }}>■</span> Private {w.private_rented_pct}%</span>
         </div>
       </div>
 
-      <div className="dp-section">
-        <div className="dp-section-ttl">Position vs Birmingham average</div>
+      <div className="d-sec">
+        <div className="d-sec-ttl">Position vs Birmingham average</div>
         <div className="meter-row">
           {meters.map(m => (
             <div key={m.lbl} className="meter-item">
@@ -141,10 +135,13 @@ export default function HousingDetailPanel({ ward: w, wards, onClose }: Props) {
             </div>
           ))}
         </div>
+        <div style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginTop: 8 }}>
+          Vertical line = Birmingham average.
+        </div>
       </div>
 
-      <div className="dp-section" style={{ borderBottom: 'none' }}>
-        <div className="dp-section-ttl">Pressure composite</div>
+      <div className="d-sec" style={{ borderBottom: 'none' }}>
+        <div className="d-sec-ttl">Pressure composite <span className="d-modelled">(modelled)</span></div>
         <div style={{ fontSize: 10.5, color: 'var(--muted)', lineHeight: 2, fontFamily: 'var(--mono)' }}>
           Overcrowding × 0.45 = {(ocN * 0.45).toFixed(3)}<br />
           Rent:income × 0.35 = {(riN * 0.35).toFixed(3)}<br />
@@ -154,12 +151,10 @@ export default function HousingDetailPanel({ ward: w, wards, onClose }: Props) {
             {' → '}decile <b style={{ color }}>{w.housing_pressure_decile}</b>
           </span>
         </div>
-      </div>
-
-      <div className="dp-note">
-        All figures are modelled estimates derived from IMD 2025, Census 2021 tenure
-        profiles, and ward deprivation indices. Not suitable for individual property decisions.
-        Source: Birmingham City Observatory · ONS Census 2021 · Land Registry (reference).
+        <p style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.6, fontFamily: 'var(--sans)', margin: '10px 0 0' }}>
+          All figures are modelled estimates derived from IMD 2025, Census 2021 tenure profiles and ward
+          deprivation indices. Not suitable for individual property decisions.
+        </p>
       </div>
     </div>
   );
