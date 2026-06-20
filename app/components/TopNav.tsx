@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import BullAscii from './BullAscii';
 
 export default function TopNav() {
   const pathname = usePathname();
@@ -23,8 +24,18 @@ export default function TopNav() {
     <header className="top-nav">
       <div className="top-nav-bar">
         <a href="/about" className="top-nav-brand" aria-label="Ozzy — Birmingham AI Intelligence — Home">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/birmingham-coat-of-arms.png" alt="" className="top-nav-crest" />
+          <BullAscii
+            animate
+            textColor="#0e0f11"
+            sweepColor="#efb700"
+            cols={38}
+            rows={24}
+            minAlpha={0.85}
+            scanInterval={1500}
+            displayWidth={60}
+            displayHeight={60}
+            style={{ margin: '-8px 0', flexShrink: 0, cursor: 'pointer' }}
+          />
           <div className="top-nav-brand-text">
             <div className="top-nav-brand-name">Ozzy</div>
             <div className="top-nav-brand-sub">Birmingham · AI Intelligence</div>

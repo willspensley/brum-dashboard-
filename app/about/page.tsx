@@ -25,11 +25,13 @@ const STATUS_STYLE: Record<string, { label: string; color: string; bg: string; b
   planned: { label: 'Planned', color: 'var(--muted)',        bg: 'rgba(107,103,96,.08)', border: 'var(--border-solid)' },
 };
 
-const STATS = [
-  { val: '8',     lbl: 'live datasets connected' },
+type Stat = { val: string; lbl: string; note?: string; link?: { href: string; text: string } };
+
+const STATS: Stat[] = [
+  { val: '8',     lbl: 'live datasets connected', note: '(so far)' },
   { val: '68',    lbl: 'Birmingham wards covered' },
   { val: '1,000s',lbl: 'data points monitored' },
-  { val: '0',     lbl: 'API keys required' },
+  { val: '5',     lbl: 'contributors', link: { href: '#contribute', text: 'Become a contributor →' } },
 ];
 
 export default function AboutPage() {
@@ -64,9 +66,8 @@ export default function AboutPage() {
           alt=""
           aria-hidden="true"
           style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%,-50%)',
-            width: 480, opacity: 0.05, pointerEvents: 'none',
+            position: 'absolute', bottom: -20, right: -64,
+            width: 460, opacity: 0.06, pointerEvents: 'none',
           }}
         />
 
@@ -120,6 +121,21 @@ export default function AboutPage() {
                 <div style={{ fontFamily: 'var(--sans)', fontSize: 10, color: 'rgba(245,243,238,.6)', marginTop: 6, letterSpacing: '.06em', textTransform: 'uppercase' }}>
                   {s.lbl}
                 </div>
+                {s.note && (
+                  <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13, color: 'rgba(239,183,0,.8)', marginTop: 4 }}>
+                    {s.note}
+                  </div>
+                )}
+                {s.link && (
+                  <a href={s.link.href} style={{
+                    display: 'inline-block', marginTop: 6,
+                    fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600,
+                    color: 'var(--herald-gold)', letterSpacing: '.04em',
+                    textDecoration: 'underline', textUnderlineOffset: 3,
+                  }}>
+                    {s.link.text}
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -134,18 +150,30 @@ export default function AboutPage() {
               <div style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 700, letterSpacing: '.18em', color: 'var(--herald-gold)', textTransform: 'uppercase', marginBottom: 18 }}>
                 What is Ozzy?
               </div>
-              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 42, color: 'var(--ink)', lineHeight: 1.15, margin: '0 0 24px', fontWeight: 400, letterSpacing: '-.01em' }}>
-                An agentic agent reading every public dataset about the city.
+              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 50, color: 'var(--ink)', lineHeight: 1.12, margin: '0 0 24px', fontWeight: 400, letterSpacing: '-.01em' }}>
+                An AI agent that wants to save Birmingham.
               </h2>
               <p style={{ fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.75, margin: '0 0 18px' }}>
-                Ozzy is connected to every publicly available dataset about Birmingham &mdash; council releases, ONS, NOMIS, DLUHC, West Midlands Police, NHS fingertips. He reads them all. He cross-references them. And then he presents what they actually say.
+                Ozzy is an open-source project with one purpose: to read every publicly available dataset about Birmingham and tell the city the truth about itself. Council releases, ONS, NOMIS, DLUHC, West Midlands Police, NHS fingertips. He reads them all. He cross-references them. And then he presents what they actually say.
               </p>
               <p style={{ fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.75, margin: '0 0 18px' }}>
-                There are <strong style={{ color: 'var(--ink)' }}>thousands of data points</strong> about this city in the public domain. Some are quietly published. Some are released in a way that obscures the reality. Some are buried under jargon. Ozzy&apos;s job is to cut through all that &mdash; and make the truth easy to see.
+                There are <strong style={{ color: 'var(--ink)' }}>thousands of data points</strong> about this city in the public domain. Some are quietly published. Some are released in a way that obscures the reality. Some are buried under jargon. Ozzy&apos;s job is to cut through all that and make the truth easy to see.
               </p>
-              <p style={{ fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.75, margin: 0 }}>
+              <p style={{ fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.75, margin: '0 0 18px' }}>
                 Not a dashboard. Not a report. Not another PowerPoint. <strong style={{ color: 'var(--ink)' }}>A voice.</strong> One that tells you where Birmingham is doing well, where it isn&apos;t, and what needs to happen next.
               </p>
+              <p style={{ fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.75, margin: '0 0 24px' }}>
+                And it&apos;s built in the open, with AI, by people who care about this city. The more Brummies who bring datasets, questions and code, the more Ozzy can see. This is a tool for the whole city to build together.
+              </p>
+              <a href="#contribute" style={{
+                display: 'inline-block',
+                fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600,
+                padding: '12px 26px',
+                background: 'var(--herald-navy)', color: '#f5f3ee',
+                textDecoration: 'none', letterSpacing: '.04em',
+              }}>
+                Contribute →
+              </a>
             </div>
 
             {/* Quote panel — navy field */}
@@ -280,7 +308,8 @@ export default function AboutPage() {
       </section>
 
       {/* OPEN SOURCE / CONTRIBUTE — strong CTA section */}
-      <section style={{
+      <section id="contribute" style={{
+        scrollMarginTop: 80,
         background: '#faf9f5',
         padding: '88px 32px 88px',
         position: 'relative',

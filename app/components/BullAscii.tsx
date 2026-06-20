@@ -18,15 +18,51 @@ const SHIMMER: string[][] = [
   ['@', '#', '%', '&', '$'],
 ];
 
-const COLS = 56;
-const ROWS = 32;
+const DEFAULT_COLS = 56;
+const DEFAULT_ROWS = 32;
 const SAMPLE_SCALE = 4;
-const FONT_SIZE = 9;
-const LINE_H = 9.5;
+const DEFAULT_FONT_SIZE = 9;
+const DEFAULT_LINE_H = 9.5;
 const DAMPING = 0.984;
 const WAVE_SPEED = 0.09;  // c² factor — tuned for visible but stable propagation
 
-export default function BullAscii() {
+interface BullAsciiProps {
+  /** Colour of the ASCII glyphs. Must be a real colour — canvas can't read CSS vars. */
+  textColor?: string;
+  /** Colour of the scan-line sweep. */
+  sweepColor?: string;
+  /** Animate the wave + sweep + mouse ripples. When false, paints one static frame. */
+  animate?: boolean;
+  /** CSS display size (px). The canvas renders at full resolution then scales down crisply. */
+  displayWidth?: number;
+  displayHeight?: number;
+  /** Style overrides for the canvas element (e.g. margin). */
+  style?: React.CSSProperties;
+  /** Grid resolution. Fewer cols/rows = chunkier, bolder glyphs — better when shrunk small. */
+  cols?: number;
+  rows?: number;
+  fontSize?: number;
+  lineH?: number;
+  /** Minimum glyph opacity. Raise it (e.g. 0.5) so a small mark reads dense and solid. */
+  minAlpha?: number;
+  /** Milliseconds between sweep passes. Lower = the sweep fires more often. */
+  scanInterval?: number;
+}
+
+export default function BullAscii({
+  textColor = '#f5f3ee',
+  sweepColor = '#efb700',
+  animate = true,
+  displayWidth,
+  displayHeight,
+  style,
+  cols = DEFAULT_COLS,
+  rows = DEFAULT_ROWS,
+  fontSize = DEFAULT_FONT_SIZE,
+  lineH = DEFAULT_LINE_H,
+  minAlpha = 0.05,
+  scanInterval = 2200,
+}: BullAsciiProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef<{ col: number; row: number } | null>(null);
 
@@ -35,15 +71,26 @@ export default function BullAscii() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
 
+    const COLS = cols;
+    const ROWS = rows;
+    const FONT_SIZE = fontSize;
+    const LINE_H = lineH;
+
     ctx.font = `${FONT_SIZE}px 'IBM Plex Mono', monospace`;
     const charW = ctx.measureText('M').width;
 
     canvas.width = Math.ceil(COLS * charW);
     canvas.height = Math.ceil(ROWS * LINE_H);
 
+    let rafId = 0;
+    let onMove: (e: MouseEvent) => void = () => {};
+    let onLeave: () => void = () => {};
+    let cancelled = false;
+
     const img = new Image();
 
     img.onload = () => {
+      if (cancelled) return;
       // ── Sample image → density grid ─────────────────────────────────────
       const W = COLS * SAMPLE_SCALE;
       const H = ROWS * SAMPLE_SCALE;
@@ -85,12 +132,10 @@ export default function BullAscii() {
       let scanRow = -1;
       let scanRowFloat = -1;
       let lastScan = performance.now();
-      const SCAN_INTERVAL = 2200;
+      const SCAN_INTERVAL = scanInterval;
       const SCAN_SPEED = 28;
 
       // ── Render loop ──────────────────────────────────────────────────────
-      let rafId = 0;
-
       const render = (ts: number) => {
         // Advance scan line
         if (scanRow === -1 && ts - lastScan > SCAN_INTERVAL) {
@@ -168,44 +213,46 @@ export default function BullAscii() {
 
             // Alpha: base opacity from density, wave adds ±0.2
             const baseAlpha = 0.1 + (d / 10) * 0.9;
-            const alpha = Math.max(0.05, Math.min(1.0, baseAlpha + wv * 0.22));
+            const alpha = Math.max(minAlpha, Math.min(1.0, baseAlpha + wv * 0.22));
 
             const isScan = r === scanRow;
             ctx.globalAlpha = isScan ? Math.min(1, alpha * 1.7) : alpha;
-            ctx.fillStyle = isScan ? '#7d4e36' : '#0e0f11';
+            ctx.fillStyle = isScan ? sweepColor : textColor;
 
             ctx.fillText(char, c * charW, r * LINE_H + FONT_SIZE);
           }
         }
 
         ctx.globalAlpha = 1;
-        rafId = requestAnimationFrame(render);
+        if (animate) rafId = requestAnimationFrame(render);
       };
+
+      // Static mode: paint a single frame and stop — no loop, no listeners.
+      if (!animate) { render(0); return; }
 
       rafId = requestAnimationFrame(render);
 
       // ── Mouse tracking ───────────────────────────────────────────────────
-      const onMove = (e: MouseEvent) => {
+      onMove = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
         const col = Math.max(0, Math.min(COLS - 1, Math.floor(((e.clientX - rect.left) / rect.width) * COLS)));
         const row = Math.max(0, Math.min(ROWS - 1, Math.floor(((e.clientY - rect.top) / rect.height) * ROWS)));
         mouseRef.current = { col, row };
       };
-      const onLeave = () => { mouseRef.current = null; };
+      onLeave = () => { mouseRef.current = null; };
       canvas.addEventListener('mousemove', onMove);
       canvas.addEventListener('mouseleave', onLeave);
-
-      return () => {
-        cancelAnimationFrame(rafId);
-        canvas.removeEventListener('mousemove', onMove);
-        canvas.removeEventListener('mouseleave', onLeave);
-      };
     };
 
     img.src = '/bull-logo.png';
 
-    return () => { /* image hasn't loaded yet, no cleanup needed */ };
-  }, []);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('mouseleave', onLeave);
+    };
+  }, [textColor, sweepColor, animate, cols, rows, fontSize, lineH, minAlpha, scanInterval]);
 
   return (
     <canvas
@@ -213,7 +260,10 @@ export default function BullAscii() {
       style={{
         display: 'block',
         margin: '0 auto 28px',
-        cursor: 'crosshair',
+        ...(animate ? { cursor: 'crosshair' } : {}),
+        ...(displayWidth != null ? { width: displayWidth } : {}),
+        ...(displayHeight != null ? { height: displayHeight } : {}),
+        ...style,
       }}
       aria-hidden="true"
     />
