@@ -143,6 +143,7 @@ export default function FiscalDashboard({ wards: fiscalWards, selected, onSelect
       <DashboardHeader
         eyebrow="Birmingham · Fiscal Balance"
         title="Who pays in, who draws down"
+        motif="none"
         subtitle={`A ward-by-ward estimate of revenue raised against benefits and public services, showing the net fiscal position per head across all ${fiscalWards.length} Birmingham wards.`}
       />
 

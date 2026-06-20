@@ -254,9 +254,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
               </button>
-              <div className="bcc-badge" title="Birmingham City Council">
-                <span>▶ FORWARD</span>B·C·C
-              </div>
               <div>
                 <div className="hdr-title">
                   {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment Deprivation'}
@@ -289,11 +286,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {/* Breadcrumb + legend — employment */}
             {view === 'employment' && (
               <div className="data-view-toolbar">
-                <div className="breadcrumb">
-                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
-                  <span style={{ margin: '0 6px' }}>/</span>
-                  <span>Employment Deprivation</span>
-                </div>
                 <div className="legend-row">
                   <span className="llbl" style={{ marginRight: 2 }}>Low</span>
                   {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
@@ -302,25 +294,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </div>
             )}
 
-            {/* Breadcrumb — crime */}
-            {isCrime && (
-              <div className="data-view-toolbar">
-                <div className="breadcrumb">
-                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
-                  <span style={{ margin: '0 6px' }}>/</span>
-                  <span>Crime Dashboard</span>
-                </div>
-              </div>
-            )}
-
             {/* Breadcrumb + legend — education */}
             {isEdu && (
               <div className="data-view-toolbar">
-                <div className="breadcrumb">
-                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
-                  <span style={{ margin: '0 6px' }}>/</span>
-                  <span>Education &amp; Skills</span>
-                </div>
                 <div className="legend-row">
                   <span className="llbl" style={{ marginRight: 2 }}>Low</span>
                   {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
@@ -332,26 +308,10 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             {/* Breadcrumb + legend — housing */}
             {isHousing && (
               <div className="data-view-toolbar">
-                <div className="breadcrumb">
-                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
-                  <span style={{ margin: '0 6px' }}>/</span>
-                  <span>Housing Affordability</span>
-                </div>
                 <div className="legend-row">
                   <span className="llbl" style={{ marginRight: 2 }}>Lower pressure</span>
                   {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
                   <span className="llbl" style={{ marginLeft: 2 }}>Higher</span>
-                </div>
-              </div>
-            )}
-
-            {/* Breadcrumb — fiscal */}
-            {isFiscal && (
-              <div className="data-view-toolbar">
-                <div className="breadcrumb">
-                  <a className="breadcrumb-back" href="/about">← Ozzy</a>
-                  <span style={{ margin: '0 6px' }}>/</span>
-                  <span>Ward Net Fiscal Balance</span>
                 </div>
               </div>
             )}

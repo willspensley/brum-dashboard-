@@ -1,6 +1,6 @@
 'use client';
 import type { HousingWard } from '@/lib/types';
-import { RAMP } from '@/lib/constants';
+import { dc } from '@/lib/constants';
 
 interface Props {
   wards: HousingWard[];
@@ -9,36 +9,44 @@ interface Props {
 }
 
 export default function HousingGrid({ wards, selected, onSelect }: Props) {
+  const sorted = [...wards].sort((a, b) => b.housing_pressure_score - a.housing_pressure_score);
+  const maxScore = Math.max(...wards.map(w => w.housing_pressure_score)) || 1;
+  const maxOC = Math.max(...wards.map(w => w.overcrowding_pct)) || 1;
+  const maxRI = Math.max(...wards.map(w => w.rent_income_pct)) || 1;
+  const maxPI = Math.max(...wards.map(w => w.price_to_income)) || 1;
+
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 2, marginBottom: 10, alignItems: 'center' }}>
-        <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginRight: 6 }}>
-          lower pressure
-        </span>
-        {RAMP.map((c, i) => (
-          <div key={i} style={{ width: 18, height: 11, background: c }} />
-        ))}
-        <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginLeft: 6 }}>
-          higher
-        </span>
-      </div>
-      <div style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginBottom: 12, lineHeight: 1.5 }}>
-        Decile = overcrowding × 0.45 + rent-to-income × 0.35 + price-to-income × 0.20
-      </div>
-      <div className="ward-grid">
-        {wards.map(w => (
+    <div className="ward-grid">
+      {sorted.map(w => {
+        const c = dc(w.housing_pressure_decile);
+        const isSelected = selected === w.ward_code;
+        return (
           <div
             key={w.ward_code}
-            className={`ward-cell${selected === w.ward_code ? ' sel' : ''}`}
-            style={{ background: RAMP[w.housing_pressure_decile - 1] }}
+            className={`wcard${isSelected ? ' selected' : ''}`}
             onClick={() => onSelect(w.ward_code)}
           >
-            <div className="wc-name">{w.ward_name}</div>
-            <div className="wc-val">{w.overcrowding_pct}%</div>
-            <div className="wc-sub">overcrowded · D{w.housing_pressure_decile}</div>
+            <div className="wc-stripe" style={{ background: c }} />
+            <div className="wc-nm">{w.ward_name}</div>
+            <div className="wc-sc">{Math.round((w.housing_pressure_score / maxScore) * 100)}</div>
+            <div className="wc-lbl">housing pressure · decile {w.housing_pressure_decile}</div>
+            <div className="wc-bars">
+              <div className="wc-bar-row">
+                <div className="wc-dot" style={{ background: '#1a2a3a' }} />
+                <div className="wc-bar-track"><div className="wc-bar-fill" style={{ width: `${(w.overcrowding_pct / maxOC) * 100}%`, background: '#1a2a3a' }} /></div>
+              </div>
+              <div className="wc-bar-row">
+                <div className="wc-dot" style={{ background: '#7d4e36' }} />
+                <div className="wc-bar-track"><div className="wc-bar-fill" style={{ width: `${(w.rent_income_pct / maxRI) * 100}%`, background: '#7d4e36' }} /></div>
+              </div>
+              <div className="wc-bar-row">
+                <div className="wc-dot" style={{ background: '#2a1a3a' }} />
+                <div className="wc-bar-track"><div className="wc-bar-fill" style={{ width: `${(w.price_to_income / maxPI) * 100}%`, background: '#2a1a3a' }} /></div>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
