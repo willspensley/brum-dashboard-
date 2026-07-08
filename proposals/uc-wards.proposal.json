@@ -1,0 +1,1622 @@
+{
+  "id": "uc-wards",
+  "status": "accepted",
+  "title": "Universal Credit claimants by ward",
+  "metric": "People on Universal Credit",
+  "unit": "claimants",
+  "generated": "2026-07-05T20:32:35.559Z",
+  "sources": [
+    {
+      "id": "universalCredit",
+      "label": "Universal Credit claimants",
+      "publisher": "DWP · via Birmingham City Observatory",
+      "dataset": "number-of-people-on-universal-credit-wmca-wards-2025",
+      "method": "administrative (hard count, not modelled)",
+      "licence": "Open Government Licence v3.0",
+      "as_of": "Feb 2026",
+      "catalogueUrl": "https://cityobservatory.birmingham.gov.uk/explore/dataset/number-of-people-on-universal-credit-wmca-wards-2025/",
+      "apiUrl": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=local_authority_code%3D%22E08000025%22&order_by=date%20DESC&limit=100"
+    },
+    {
+      "id": "population",
+      "label": "Ward population (denominator for the rate)",
+      "publisher": "Office for National Statistics",
+      "dataset": "NOMIS NM_2014_1 (SAPE)",
+      "method": "official estimate",
+      "licence": "Open Government Licence v3.0",
+      "as_of": "Mid-2024",
+      "catalogueUrl": "https://www.nomisweb.co.uk/datasets/pestsyoala",
+      "apiUrl": "https://www.nomisweb.co.uk/datasets/pestsyoala"
+    }
+  ],
+  "source": {
+    "label": "Universal Credit claimants",
+    "publisher": "DWP · via Birmingham City Observatory",
+    "dataset": "number-of-people-on-universal-credit-wmca-wards-2025",
+    "method": "administrative (hard count, not modelled)",
+    "licence": "Open Government Licence v3.0",
+    "as_of": "Feb 2026",
+    "catalogueUrl": "https://cityobservatory.birmingham.gov.uk/explore/dataset/number-of-people-on-universal-credit-wmca-wards-2025/",
+    "apiUrl": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=local_authority_code%3D%22E08000025%22&order_by=date%20DESC&limit=100"
+  },
+  "validation": {
+    "wards_found": 69,
+    "wards_expected": 69,
+    "complete": true,
+    "skipped": [],
+    "total_claimants": 247178,
+    "total_population": 1183618,
+    "city_pct": 20.9
+  },
+  "raw_sample": [
+    {
+      "metrictypeidentifier": "13379",
+      "metrictypelabel": "No. of people on Universal Credit",
+      "local_authority_name": "Birmingham",
+      "local_authority_code": "E08000025",
+      "arealabel": "Balsall Heath West",
+      "areaidentifier": "E05011122",
+      "arealonglabel": "Balsall Heath West, Birmingham",
+      "date": "2026-02",
+      "periodlabel": "Feb 2026",
+      "periodidentifier": "Month_2026_February",
+      "value": 3591,
+      "valuetypelabel": "Claimants",
+      "format": "#,##0",
+      "_note": "geo_shape (ward boundary polygon) present in API, omitted here for readability"
+    },
+    {
+      "metrictypeidentifier": "13379",
+      "metrictypelabel": "No. of people on Universal Credit",
+      "local_authority_name": "Birmingham",
+      "local_authority_code": "E08000025",
+      "arealabel": "Bournville & Cotteridge",
+      "areaidentifier": "E05011129",
+      "arealonglabel": "Bournville & Cotteridge, Birmingham",
+      "date": "2026-02",
+      "periodlabel": "Feb 2026",
+      "periodidentifier": "Month_2026_February",
+      "value": 2835,
+      "valuetypelabel": "Claimants",
+      "format": "#,##0",
+      "_note": "geo_shape (ward boundary polygon) present in API, omitted here for readability"
+    },
+    {
+      "metrictypeidentifier": "13379",
+      "metrictypelabel": "No. of people on Universal Credit",
+      "local_authority_name": "Birmingham",
+      "local_authority_code": "E08000025",
+      "arealabel": "Hall Green North",
+      "areaidentifier": "E05011140",
+      "arealonglabel": "Hall Green North, Birmingham",
+      "date": "2026-02",
+      "periodlabel": "Feb 2026",
+      "periodidentifier": "Month_2026_February",
+      "value": 4787,
+      "valuetypelabel": "Claimants",
+      "format": "#,##0",
+      "_note": "geo_shape (ward boundary polygon) present in API, omitted here for readability"
+    }
+  ],
+  "wards": [
+    {
+      "ward_code": "E05011153",
+      "ward_name": "Lozells",
+      "uc_claimants": 4068,
+      "population": 12500,
+      "pct_on_uc": 32.5,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011153%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011182",
+      "ward_name": "Tyseley & Hay Mills",
+      "uc_claimants": 3998,
+      "population": 12360,
+      "pct_on_uc": 32.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011182%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011142",
+      "ward_name": "Handsworth",
+      "uc_claimants": 4092,
+      "population": 12651,
+      "pct_on_uc": 32.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011142%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011127",
+      "ward_name": "Bordesley Green",
+      "uc_claimants": 4367,
+      "population": 13580,
+      "pct_on_uc": 32.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011127%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011147",
+      "ward_name": "Holyhead",
+      "uc_claimants": 3684,
+      "population": 11635,
+      "pct_on_uc": 31.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011147%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011170",
+      "ward_name": "Sparkbrook & Balsall Heath East",
+      "uc_claimants": 8698,
+      "population": 28274,
+      "pct_on_uc": 30.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011170%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011125",
+      "ward_name": "Birchfield",
+      "uc_claimants": 3923,
+      "population": 13011,
+      "pct_on_uc": 30.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011125%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011145",
+      "ward_name": "Heartlands",
+      "uc_claimants": 3915,
+      "population": 13610,
+      "pct_on_uc": 28.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011145%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011121",
+      "ward_name": "Aston",
+      "uc_claimants": 7102,
+      "population": 24653,
+      "pct_on_uc": 28.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011121%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011173",
+      "ward_name": "Stockland Green",
+      "uc_claimants": 7066,
+      "population": 24847,
+      "pct_on_uc": 28.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011173%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011186",
+      "ward_name": "Yardley West & Stechford",
+      "uc_claimants": 4069,
+      "population": 14433,
+      "pct_on_uc": 28.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011186%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011132",
+      "ward_name": "Castle Vale",
+      "uc_claimants": 2878,
+      "population": 10243,
+      "pct_on_uc": 28.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011132%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011183",
+      "ward_name": "Ward End",
+      "uc_claimants": 3955,
+      "population": 14110,
+      "pct_on_uc": 28,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011183%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011122",
+      "ward_name": "Balsall Heath West",
+      "uc_claimants": 3591,
+      "population": 12878,
+      "pct_on_uc": 27.9,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011122%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011138",
+      "ward_name": "Glebe Farm & Tile Cross",
+      "uc_claimants": 7140,
+      "population": 25563,
+      "pct_on_uc": 27.9,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011138%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011167",
+      "ward_name": "Small Heath",
+      "uc_claimants": 6044,
+      "population": 22167,
+      "pct_on_uc": 27.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011167%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011120",
+      "ward_name": "Alum Rock",
+      "uc_claimants": 7783,
+      "population": 28753,
+      "pct_on_uc": 27.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011120%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011126",
+      "ward_name": "Bordesley & Highgate",
+      "uc_claimants": 4736,
+      "population": 17835,
+      "pct_on_uc": 26.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011126%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011157",
+      "ward_name": "North Edgbaston",
+      "uc_claimants": 6211,
+      "population": 23867,
+      "pct_on_uc": 26,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011157%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011171",
+      "ward_name": "Sparkhill",
+      "uc_claimants": 5703,
+      "population": 22285,
+      "pct_on_uc": 25.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011171%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011136",
+      "ward_name": "Frankley Great Park",
+      "uc_claimants": 3159,
+      "population": 12471,
+      "pct_on_uc": 25.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011136%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011139",
+      "ward_name": "Gravelly Hill",
+      "uc_claimants": 2708,
+      "population": 10932,
+      "pct_on_uc": 24.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011139%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011168",
+      "ward_name": "Soho & Jewellery Quarter",
+      "uc_claimants": 6863,
+      "population": 27826,
+      "pct_on_uc": 24.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011168%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011155",
+      "ward_name": "Nechells",
+      "uc_claimants": 4584,
+      "population": 18647,
+      "pct_on_uc": 24.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011155%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011118",
+      "ward_name": "Acocks Green",
+      "uc_claimants": 6123,
+      "population": 25120,
+      "pct_on_uc": 24.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011118%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011149",
+      "ward_name": "King's Norton South",
+      "uc_claimants": 2850,
+      "population": 11688,
+      "pct_on_uc": 24.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011149%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011150",
+      "ward_name": "Kingstanding",
+      "uc_claimants": 5289,
+      "population": 21643,
+      "pct_on_uc": 24.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011150%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011123",
+      "ward_name": "Bartley Green",
+      "uc_claimants": 5432,
+      "population": 23013,
+      "pct_on_uc": 23.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011123%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011161",
+      "ward_name": "Perry Common",
+      "uc_claimants": 2836,
+      "population": 12187,
+      "pct_on_uc": 23.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011161%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011131",
+      "ward_name": "Bromford & Hodge Hill",
+      "uc_claimants": 5286,
+      "population": 23225,
+      "pct_on_uc": 22.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011131%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011156",
+      "ward_name": "Newtown",
+      "uc_claimants": 4095,
+      "population": 18108,
+      "pct_on_uc": 22.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011156%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011165",
+      "ward_name": "Shard End",
+      "uc_claimants": 2784,
+      "population": 12459,
+      "pct_on_uc": 22.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011165%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011160",
+      "ward_name": "Perry Barr",
+      "uc_claimants": 4453,
+      "population": 21141,
+      "pct_on_uc": 21.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011160%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011137",
+      "ward_name": "Garretts Green",
+      "uc_claimants": 2468,
+      "population": 11896,
+      "pct_on_uc": 20.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011137%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011162",
+      "ward_name": "Pype Hayes",
+      "uc_claimants": 2354,
+      "population": 11431,
+      "pct_on_uc": 20.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011162%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011133",
+      "ward_name": "Druids Heath & Monyhull",
+      "uc_claimants": 2398,
+      "population": 11664,
+      "pct_on_uc": 20.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011133%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011154",
+      "ward_name": "Moseley",
+      "uc_claimants": 4279,
+      "population": 21621,
+      "pct_on_uc": 19.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011154%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011124",
+      "ward_name": "Billesley",
+      "uc_claimants": 4336,
+      "population": 21906,
+      "pct_on_uc": 19.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011124%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011184",
+      "ward_name": "Weoley & Selly Oak",
+      "uc_claimants": 4674,
+      "population": 24079,
+      "pct_on_uc": 19.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011184%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011119",
+      "ward_name": "Allens Cross",
+      "uc_claimants": 2191,
+      "population": 11408,
+      "pct_on_uc": 19.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011119%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011135",
+      "ward_name": "Erdington",
+      "uc_claimants": 4351,
+      "population": 22831,
+      "pct_on_uc": 19.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011135%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011164",
+      "ward_name": "Rubery & Rednal",
+      "uc_claimants": 1954,
+      "population": 10306,
+      "pct_on_uc": 19,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011164%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011166",
+      "ward_name": "Sheldon",
+      "uc_claimants": 3848,
+      "population": 20619,
+      "pct_on_uc": 18.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011166%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011140",
+      "ward_name": "Hall Green North",
+      "uc_claimants": 4787,
+      "population": 25866,
+      "pct_on_uc": 18.5,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011140%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011152",
+      "ward_name": "Longbridge & West Heath",
+      "uc_claimants": 4081,
+      "population": 22479,
+      "pct_on_uc": 18.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011152%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011185",
+      "ward_name": "Yardley East",
+      "uc_claimants": 2076,
+      "population": 11554,
+      "pct_on_uc": 18,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011185%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011146",
+      "ward_name": "Highter's Heath",
+      "uc_claimants": 1798,
+      "population": 10966,
+      "pct_on_uc": 16.4,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011146%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011151",
+      "ward_name": "Ladywood",
+      "uc_claimants": 4764,
+      "population": 29283,
+      "pct_on_uc": 16.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011151%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011130",
+      "ward_name": "Brandwood & King's Heath",
+      "uc_claimants": 3046,
+      "population": 18977,
+      "pct_on_uc": 16.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011130%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011169",
+      "ward_name": "South Yardley",
+      "uc_claimants": 1859,
+      "population": 11583,
+      "pct_on_uc": 16,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011169%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011144",
+      "ward_name": "Harborne",
+      "uc_claimants": 3584,
+      "population": 22786,
+      "pct_on_uc": 15.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011144%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011159",
+      "ward_name": "Oscott",
+      "uc_claimants": 3291,
+      "population": 20993,
+      "pct_on_uc": 15.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011159%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011143",
+      "ward_name": "Handsworth Wood",
+      "uc_claimants": 3242,
+      "population": 20753,
+      "pct_on_uc": 15.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011143%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011163",
+      "ward_name": "Quinton",
+      "uc_claimants": 3355,
+      "population": 21577,
+      "pct_on_uc": 15.5,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011163%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011172",
+      "ward_name": "Stirchley",
+      "uc_claimants": 1562,
+      "population": 10309,
+      "pct_on_uc": 15.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011172%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011148",
+      "ward_name": "King's Norton North",
+      "uc_claimants": 1749,
+      "population": 11579,
+      "pct_on_uc": 15.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011148%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011129",
+      "ward_name": "Bournville & Cotteridge",
+      "uc_claimants": 2835,
+      "population": 19404,
+      "pct_on_uc": 14.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011129%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011158",
+      "ward_name": "Northfield",
+      "uc_claimants": 1520,
+      "population": 10450,
+      "pct_on_uc": 14.5,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011158%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011176",
+      "ward_name": "Sutton Reddicap",
+      "uc_claimants": 1279,
+      "population": 10060,
+      "pct_on_uc": 12.7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011176%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011128",
+      "ward_name": "Bournbrook & Selly Park",
+      "uc_claimants": 2246,
+      "population": 22817,
+      "pct_on_uc": 9.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011128%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011141",
+      "ward_name": "Hall Green South",
+      "uc_claimants": 1012,
+      "population": 11094,
+      "pct_on_uc": 9.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011141%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011134",
+      "ward_name": "Edgbaston",
+      "uc_claimants": 1383,
+      "population": 18898,
+      "pct_on_uc": 7.3,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011134%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011180",
+      "ward_name": "Sutton Walmley & Minworth",
+      "uc_claimants": 1179,
+      "population": 16324,
+      "pct_on_uc": 7.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011180%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011179",
+      "ward_name": "Sutton Vesey",
+      "uc_claimants": 1405,
+      "population": 20145,
+      "pct_on_uc": 7,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011179%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011174",
+      "ward_name": "Sutton Four Oaks",
+      "uc_claimants": 577,
+      "population": 9277,
+      "pct_on_uc": 6.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011174%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011178",
+      "ward_name": "Sutton Trinity",
+      "uc_claimants": 593,
+      "population": 9683,
+      "pct_on_uc": 6.1,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011178%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011181",
+      "ward_name": "Sutton Wylde Green",
+      "uc_claimants": 510,
+      "population": 9047,
+      "pct_on_uc": 5.6,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011181%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011175",
+      "ward_name": "Sutton Mere Green",
+      "uc_claimants": 521,
+      "population": 10086,
+      "pct_on_uc": 5.2,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011175%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    },
+    {
+      "ward_code": "E05011177",
+      "ward_name": "Sutton Roughley",
+      "uc_claimants": 586,
+      "population": 12152,
+      "pct_on_uc": 4.8,
+      "period": "Feb 2026",
+      "provenance": {
+        "count": {
+          "source": "DWP · via Birmingham City Observatory",
+          "method": "administrative",
+          "url": "https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/number-of-people-on-universal-credit-wmca-wards-2025/records?where=areaidentifier%3D%22E05011177%22&order_by=date%20DESC&limit=1"
+        },
+        "population": {
+          "source": "ONS mid-2024 SAPE (NOMIS NM_2014_1)",
+          "method": "official estimate"
+        },
+        "pct": {
+          "method": "derived — claimants ÷ residents × 100"
+        }
+      }
+    }
+  ],
+  "reviewed_at": "2026-07-05T22:30:31.595Z"
+}

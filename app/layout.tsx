@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import HeraldryDefs from './components/HeraldryDefs';
 import TopNav from './components/TopNav';

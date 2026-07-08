@@ -1,6 +1,7 @@
 'use client';
 import type { HousingWard } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
+import Tip from '../../components/Tip';
 
 interface Props {
   ward: HousingWard;
@@ -68,26 +69,34 @@ export default function HousingDetailPanel({ ward: w, wards, onClose }: Props) {
         </div>
 
         <div className="d-chips">
-          <div className="d-chip">
-            <div className="d-chip-lbl">House price</div>
-            <div className="d-chip-val">£{w.median_house_price_k}k</div>
-            <div className="d-chip-sub">avg £{cityAvgPrice}k</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Price to income</div>
-            <div className="d-chip-val">{w.price_to_income}×</div>
-            <div className="d-chip-sub">avg {cityAvgPTI}×</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Rent / month</div>
-            <div className="d-chip-val">£{w.private_rent_pcm}</div>
-            <div className="d-chip-sub">avg £{cityAvgRent}</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Rent to income</div>
-            <div className="d-chip-val" style={{ color: w.rent_income_pct > 30 ? 'var(--herald-red)' : undefined }}>{w.rent_income_pct}%</div>
-            <div className="d-chip-sub">avg {cityAvgRI}% · 30% stress</div>
-          </div>
+          <Tip text="Median home sale price in the ward (£, thousands). 'avg' is the Birmingham median. Modelled from Land Registry and Census tenure profiles.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">House price</div>
+              <div className="d-chip-val">£{w.median_house_price_k}k</div>
+              <div className="d-chip-sub">avg £{cityAvgPrice}k</div>
+            </div>
+          </Tip>
+          <Tip text="Median house price divided by median resident income — roughly how many years of income it takes to buy a home. Higher = less affordable; around 5× is widely seen as stretched.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Price to income</div>
+              <div className="d-chip-val">{w.price_to_income}×</div>
+              <div className="d-chip-sub">avg {cityAvgPTI}×</div>
+            </div>
+          </Tip>
+          <Tip text="Typical private monthly rent (£) for the ward. 'avg' is the Birmingham mean. Modelled estimate.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Rent / month</div>
+              <div className="d-chip-val">£{w.private_rent_pcm}</div>
+              <div className="d-chip-sub">avg £{cityAvgRent}</div>
+            </div>
+          </Tip>
+          <Tip text="Share of a typical renter's income spent on rent. Above ~30% is widely considered unaffordable ('rent stress'). 'avg' is the Birmingham mean.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Rent to income</div>
+              <div className="d-chip-val" style={{ color: w.rent_income_pct > 30 ? 'var(--herald-red)' : undefined }}>{w.rent_income_pct}%</div>
+              <div className="d-chip-sub">avg {cityAvgRI}% · 30% stress</div>
+            </div>
+          </Tip>
         </div>
       </div>
 

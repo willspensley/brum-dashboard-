@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import type { Ward } from '@/lib/types';
+import type { CrimeWard } from '@/lib/types';
 import { CRIME_RAMP } from '@/lib/constants';
 
 interface Props {
-  wards: Ward[];
-  selected: Ward | null;
+  wards: CrimeWard[];
+  selected: CrimeWard | null;
   onSelect: (code: string) => void;
 }
 
 export default function CrimeTable({ wards, selected, onSelect }: Props) {
-  const [sortKey, setSortKey] = useState<'crime_rate_per_1000' | 'crime_yoy_pct' | 'ward_name'>('crime_rate_per_1000');
+  const [sortKey, setSortKey] = useState<'crime_rate_per_1000' | 'ward_name'>('crime_rate_per_1000');
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
 
   const sorted = [...wards].sort((a, b) => {
@@ -45,9 +45,6 @@ export default function CrimeTable({ wards, selected, onSelect }: Props) {
               Rate /1000 {sortKey === 'crime_rate_per_1000' ? (sortDir === -1 ? '↓' : '↑') : ''}
             </th>
             <th>Rank</th>
-            <th className="sort-th" onClick={() => handleSort('crime_yoy_pct')}>
-              YoY % {sortKey === 'crime_yoy_pct' ? (sortDir === -1 ? '↓' : '↑') : ''}
-            </th>
             <th>Bar</th>
           </tr>
         </thead>
@@ -63,10 +60,6 @@ export default function CrimeTable({ wards, selected, onSelect }: Props) {
                 {w.crime_rate_per_1000.toFixed(1)}
               </td>
               <td className="td-mono td-muted">#{w.crime_rank}</td>
-              <td className="td-mono" style={{ color: w.crime_yoy_pct > 0 ? 'var(--q-disad)' : 'var(--q-prosp)' }}>
-                {w.crime_yoy_pct > 0 ? '+' : ''}{w.crime_yoy_pct.toFixed(1)}%
-                <span className="yoy-label"> (modelled)</span>
-              </td>
               <td>
                 <div className="mini-bar-bg">
                   <div

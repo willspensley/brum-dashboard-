@@ -1,8 +1,9 @@
 'use client';
 
 import type { Ward } from '@/lib/types';
+import Tip from '../../components/Tip';
 
-const RAMP = ['#7a8270','#7a7a5e','#7d6e4e','#7e5e40','#7d4e36','#73402e','#683428','#5b2a23','#4d211d','#3a1a1a'];
+const RAMP =['#7a8270','#7a7a5e','#7d6e4e','#7e5e40','#7d4e36','#73402e','#683428','#5b2a23','#4d211d','#3a1a1a'];
 
 interface Props {
   ward: Ward;
@@ -36,26 +37,34 @@ export default function NeetDetailPanel({ ward: w, wards, onClose }: Props) {
         </div>
 
         <div className="d-chips">
-          <div className="d-chip">
-            <div className="d-chip-lbl">Youth UC 16–24</div>
-            <div className="d-chip-val" style={{ color: col }}>{w.youth_claimant_rate}%</div>
-            <div className="d-chip-sub">avg {cityAvgYouth}% · weight 50%</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Health inactivity</div>
-            <div className="d-chip-val">{w.inactivity_sick_pct}%</div>
-            <div className="d-chip-sub">avg {cityAvgIA}% · weight 30%</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">IMD employment</div>
-            <div className="d-chip-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
-            <div className="d-chip-sub">weight 20%</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Risk rank</div>
-            <div className="d-chip-val" style={{ color: col }}>#{rank}</div>
-            <div className="d-chip-sub">of {wards.length} wards</div>
-          </div>
+          <Tip text="Share of 16–24 year-olds claiming Universal Credit (NOMIS). This is the largest input — 50% — to the modelled NEET-risk score. 'avg' is the Birmingham mean.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Youth UC 16–24</div>
+              <div className="d-chip-val" style={{ color: col }}>{w.youth_claimant_rate}%</div>
+              <div className="d-chip-sub">avg {cityAvgYouth}% · weight 50%</div>
+            </div>
+          </Tip>
+          <Tip text="Share of working-age residents economically inactive due to long-term sickness (Census 2021). Contributes 30% of the NEET-risk score.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Health inactivity</div>
+              <div className="d-chip-val">{w.inactivity_sick_pct}%</div>
+              <div className="d-chip-sub">avg {cityAvgIA}% · weight 30%</div>
+            </div>
+          </Tip>
+          <Tip text="The IMD 2025 employment-deprivation score for the ward. Contributes 20% of the modelled NEET-risk score.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">IMD employment</div>
+              <div className="d-chip-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
+              <div className="d-chip-sub">weight 20%</div>
+            </div>
+          </Tip>
+          <Tip text="Where the ward ranks on the modelled NEET-risk composite. #1 = highest risk. This is an estimate — not an official NEET rate.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Risk rank</div>
+              <div className="d-chip-val" style={{ color: col }}>#{rank}</div>
+              <div className="d-chip-sub">of {wards.length} wards</div>
+            </div>
+          </Tip>
         </div>
       </div>
 

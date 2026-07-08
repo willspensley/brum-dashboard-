@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { EducationWard } from '@/lib/types';
 
-type SortKey = 'ward_name' | 'qual_none' | 'qual_level4plus' | 'qual_level3' | 'qual_level2' | 'qual_apprenticeship' | 'qual_level1' | 'imd_edu_decile';
+type SortKey = 'ward_name' | 'qual_none' | 'qual_level4plus' | 'qual_level3' | 'qual_level2' | 'qual_apprenticeship' | 'qual_level1' | 'skills_decile';
 
 interface Props {
   wards: EducationWard[];
@@ -19,7 +19,7 @@ const COLS: { key: SortKey; label: string; title: string }[] = [
   { key: 'qual_apprenticeship', label: 'Apprent.',   title: '% Apprenticeship' },
   { key: 'qual_level3',      label: 'Level 3',       title: '% Level 3 (e.g. A-level, BTEC)' },
   { key: 'qual_level4plus',  label: 'Level 4+',      title: '% Level 4+ (degree level and above)' },
-  { key: 'imd_edu_decile',   label: 'IMD Edu',       title: 'IMD 2025 Education domain decile (10 = most deprived)' },
+  { key: 'skills_decile',    label: 'Skills',        title: 'Skills decile by % no qualifications (10 = most deprived)' },
 ];
 
 const RAMP = ['#7a8270','#7a7a5e','#7d6e4e','#7e5e40','#7d4e36','#73402e','#683428','#5b2a23','#4d211d','#3a1a1a'];
@@ -73,8 +73,8 @@ export default function QualTable({ wards, selected, onSelect }: Props) {
                 <td>{w.qual_level3.toFixed(1)}%</td>
                 <td style={{ fontWeight: 500, color: w.qual_level4plus > 40 ? '#1a3a2a' : 'inherit' }}>{w.qual_level4plus.toFixed(1)}%</td>
                 <td>
-                  <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 0, background: decileColor(w.imd_edu_decile), marginRight: 5, verticalAlign: 'middle' }} />
-                  {w.imd_edu_decile}
+                  <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 0, background: decileColor(w.skills_decile), marginRight: 5, verticalAlign: 'middle' }} />
+                  {w.skills_decile}
                 </td>
               </tr>
             );

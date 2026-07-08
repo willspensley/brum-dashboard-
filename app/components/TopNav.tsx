@@ -17,6 +17,7 @@ export default function TopNav() {
     { href: '/about',     label: 'About' },
     { href: '/ozzy',      label: 'Ask Ozzy' },
     { href: '/dashboard', label: 'Dashboards' },
+    { href: '/review',    label: 'Review' },
     { href: '/sources',   label: 'Data Sources' },
   ];
 

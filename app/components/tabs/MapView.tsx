@@ -69,6 +69,9 @@ export default function MapView({ wards, onSelect }: Props) {
         };
         legend.addTo(map);
 
+        // Container is mounted at full size from first render, but invalidate
+        // once more in case a parent layout shift changed its dimensions.
+        map.invalidateSize();
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;
@@ -89,14 +92,14 @@ export default function MapView({ wards, onSelect }: Props) {
 
   return (
     <div style={{ position: 'relative' }}>
+      <div ref={containerRef} className="map-container" />
       {status !== 'ready' && (
-        <div className="map-loading">
+        <div className="map-loading" style={{ position: 'absolute', inset: 0, zIndex: 1100 }}>
           {status === 'loading'
             ? <span>Loading ward boundaries…</span>
             : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
         </div>
       )}
-      <div ref={containerRef} className="map-container" style={{ display: status === 'ready' ? 'block' : 'none' }} />
     </div>
   );
 }

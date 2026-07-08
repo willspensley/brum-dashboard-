@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Ward } from '@/lib/types';
+import type { CrimeWard } from '@/lib/types';
 import { CRIME_RAMP } from '@/lib/constants';
 import { fetchWardBoundaries } from '@/lib/fetch-ward-boundaries';
 
 interface Props {
-  wards: Ward[];
+  wards: CrimeWard[];
   onSelect: (code: string) => void;
 }
 
@@ -56,9 +56,9 @@ export default function CrimeMap({ wards, onSelect }: Props) {
             const w = wardIndex[feat?.properties?.WD22CD ?? ''];
             return {
               fillColor: w ? rampColor(w.crime_rate_per_1000) : '#ccc',
-              fillOpacity: 0.75,
-              color: '#0e0f11',
-              weight: 0.7,
+              fillOpacity: 0.7,
+              color: '#f5f3ee',
+              weight: 1.2,
             };
           },
           onEachFeature: (feat, layer) => {
@@ -71,6 +71,7 @@ export default function CrimeMap({ wards, onSelect }: Props) {
           },
         }).addTo(map);
 
+        map.invalidateSize();
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;
@@ -91,14 +92,14 @@ export default function CrimeMap({ wards, onSelect }: Props) {
 
   return (
     <div style={{ position: 'relative' }}>
+      <div ref={containerRef} className="map-container" style={{ height: '100%', minHeight: 420 }} />
       {status !== 'ready' && (
-        <div className="map-loading">
+        <div className="map-loading" style={{ position: 'absolute', inset: 0, zIndex: 1100 }}>
           {status === 'loading'
             ? <span>Loading ward boundaries…</span>
             : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
         </div>
       )}
-      <div ref={containerRef} className="map-container" style={{ height: '100%', minHeight: 420, display: status === 'ready' ? 'block' : 'none' }} />
     </div>
   );
 }

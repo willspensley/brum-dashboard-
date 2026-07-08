@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData } from '@/lib/types';
+import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData, CrimeWard, BenefitsData, UcEmpData, HousingBenefitData, ClaimantData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import GridView from './tabs/GridView';
 import TableView from './tabs/TableView';
@@ -26,13 +26,18 @@ import { buildFiscalWards } from '@/lib/synth-fiscal';
 import type { HousingWard, FiscalWard } from '@/lib/types';
 import FiscalDashboard from '../fiscal/components/FiscalDashboard';
 import FiscalDetailPanel from '../fiscal/components/FiscalDetailPanel';
+import BenefitsDashboard from '../benefits/components/BenefitsDashboard';
+import UcEmpDashboard from '../uc-employment/components/UcEmpDashboard';
+import HousingBenefitView from '../housing-benefit/components/HousingBenefitView';
+import ClaimantDashboard from '../claimant-count/components/ClaimantDashboard';
+import ScoringNote from './brand/ScoringNote';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal';
+type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal' | 'benefits' | 'ucemp' | 'hbenefit' | 'claimant';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -45,6 +50,8 @@ interface Props {
   eduWards: EducationWard[];
   eduMeta: EduDataMeta;
   neetData: NeetCityData;
+  crimeWards: CrimeWard[];
+  crimeMonth: string;
 }
 
 const EDU_SOURCES = [
@@ -71,7 +78,7 @@ const EDU_SOURCES = [
   },
 ];
 
-export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta, neetData }: Props) {
+export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta, neetData, crimeWards, crimeMonth }: Props) {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>('employment');
   const [empSub, setEmpSub] = useState<EmpSub>('grid');
@@ -82,9 +89,62 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [selectedYouth, setSelectedYouth] = useState<Ward | null>(null);
   const [selectedHousing, setSelectedHousing] = useState<string | null>(null);
   const [selectedFiscal, setSelectedFiscal] = useState<string | null>(null);
+  const [selectedCrime, setSelectedCrime] = useState<string | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [benefitsData, setBenefitsData] = useState<BenefitsData | null>(null);
+  const [ucEmpData, setUcEmpData] = useState<UcEmpData | null>(null);
+  const [hbData, setHbData] = useState<HousingBenefitData | null>(null);
+  const [claimantData, setClaimantData] = useState<ClaimantData | null>(null);
+
+  // Load PUBLISHED dashboards at runtime. Each is present only once its proposal has
+  // been accepted in /review (which writes public/data/<id>.json). Client-side fetch →
+  // Accept makes the sidebar entry appear with no rebuild.
+  useEffect(() => {
+    fetch('/data/uc-wards.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.wards) setBenefitsData({
+          as_of: j.as_of, city_pct: j.city_pct, total_claimants: j.total_claimants,
+          total_population: j.total_population, sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/uc-employment.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.wards) setUcEmpData({
+          as_of: j.as_of, ward_mean_pct: j.ward_mean_pct,
+          sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/claimant-count.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.wards) setClaimantData({
+          as_of: j.as_of, months: j.months ?? [], ward_mean_pct: j.ward_mean_pct ?? null,
+          total_claimants: j.total_claimants ?? 0,
+          sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/housing-benefit.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.areas) setHbData({
+          as_of: j.as_of, metric: j.metric, geography: j.geography ?? 'local-authority',
+          areas: j.areas, benchmarks: j.benchmarks ?? { wmca: null, england: null },
+          birmingham_value: j.birmingham_value ?? null, birmingham_rank: j.birmingham_rank ?? null,
+          sources: j.sources ?? (j.source ? [j.source] : []),
+        });
+      })
+      .catch(() => { /* not published yet */ });
+  }, []);
 
   useEffect(() => {
     try {
@@ -136,10 +196,15 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   };
 
   const isCrime   = view === 'crime';
+  const selectedCrimeWard = crimeWards.find(w => w.ward_code === selectedCrime) ?? null;
   const isEdu     = view === 'education';
   const isYouth   = view === 'youth';
   const isHousing = view === 'housing';
   const isFiscal  = view === 'fiscal';
+  const isBenefits = view === 'benefits';
+  const isUcEmp = view === 'ucemp';
+  const isHBenefit = view === 'hbenefit';
+  const isClaimant = view === 'claimant';
 
   const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
   const fiscalWards: FiscalWard[] = useMemo(() => buildFiscalWards(wards), [wards]);
@@ -202,7 +267,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             </button>
             <button className={`dash-nav-btn${isEdu ? ' active' : ''}`} onClick={() => setView('education')}>
               <span className="dash-nav-glyph">◈</span> Education &amp; Skills
-              {eduMeta.quals.source === 'live' && <span className="dash-live-dot">●</span>}
             </button>
             <button className={`dash-nav-btn${isYouth ? ' active' : ''}`} onClick={() => setView('youth')}>
               <span className="dash-nav-glyph">◑</span> Youth &amp; NEET
@@ -214,6 +278,30 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             <button className={`dash-nav-btn${isFiscal ? ' active' : ''}`} onClick={() => setView('fiscal')}>
               <span className="dash-nav-glyph">£</span> Fiscal Balance
             </button>
+            {benefitsData && (
+              <button className={`dash-nav-btn${isBenefits ? ' active' : ''}`} onClick={() => setView('benefits')}>
+                <span className="dash-nav-glyph">▤</span> Benefits (UC)
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {ucEmpData && (
+              <button className={`dash-nav-btn${isUcEmp ? ' active' : ''}`} onClick={() => setView('ucemp')}>
+                <span className="dash-nav-glyph">◧</span> UC in Work
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {hbData && (
+              <button className={`dash-nav-btn${isHBenefit ? ' active' : ''}`} onClick={() => setView('hbenefit')}>
+                <span className="dash-nav-glyph">⌂</span> Housing Benefit
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {claimantData && (
+              <button className={`dash-nav-btn${isClaimant ? ' active' : ''}`} onClick={() => setView('claimant')}>
+                <span className="dash-nav-glyph">▥</span> Claimant Count
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
           </div>
 
           {/* Ask Ozzy link */}
@@ -256,14 +344,18 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </button>
               <div>
                 <div className="hdr-title">
-                  {isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment Deprivation'}
+                  {isClaimant ? 'Claimant Count' : isHBenefit ? 'Housing Benefit' : isUcEmp ? 'UC Claimants in Work' : isBenefits ? 'Universal Credit' : isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment & Benefits'}
                 </div>
                 <div className="hdr-sub">
-                  {isEdu ? '68 wards · qualifications & skills'
+                  {isClaimant ? `69 wards · % of 16–64 residents claiming · ${claimantData?.as_of ?? ''} · DWP`
+                    : isHBenefit ? `Local authority · no ward breakdown · % of households · ${hbData?.as_of ?? ''} · DWP`
+                    : isUcEmp ? `69 wards · % of claimants in employment · ${ucEmpData?.as_of ?? ''} · DWP`
+                    : isBenefits ? `69 wards · % of residents on UC · ${benefitsData?.as_of ?? ''} · DWP`
+                    : isEdu ? '68 wards · qualifications & skills'
                     : isYouth ? '68 wards · 16–24 NEET risk'
                     : isHousing ? '68 wards · affordability pressure · modelled'
                     : isFiscal ? '68 wards · net fiscal balance per head · modelled'
-                    : isCrime ? '68 wards · recorded offences'
+                    : isCrime ? `${crimeWards.length} wards · recorded crime · ${crimeMonth} · data.police.uk`
                     : '68 wards · claimant rate & deprivation'}
                 </div>
               </div>
@@ -276,12 +368,65 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
         </div>
         <div className="hdr-dancetty" aria-hidden="true" />
 
+        {isClaimant && claimantData ? (
+          <ClaimantDashboard data={claimantData} />
+        ) : isHBenefit && hbData ? (
+          <HousingBenefitView data={hbData} />
+        ) : isBenefits && benefitsData ? (
+          <BenefitsDashboard data={benefitsData} />
+        ) : isUcEmp && ucEmpData ? (
+          <UcEmpDashboard data={ucEmpData} />
+        ) : (
         <div className={`body${bodyClass}`}>
           <div className="lcol">
 
             {/* Top stat-tile rows removed across all dashboards — per design review */}
 
             {/* Education stats row removed — per design review */}
+
+            {/* Per-view scoring / ranking explainer */}
+            {view === 'employment' && (
+              <ScoringNote label="How wards are scored">
+                Wards are ranked by a composite disadvantage score — IMD employment 40%, claimant count 35%,
+                health inactivity 25% — then split into deciles 1–10. Decile 10 (darkest) = most disadvantaged;
+                decile 1 (lightest) = least. The Economic Matrix instead plots workplace output (GVA per head)
+                against this deprivation.
+              </ScoringNote>
+            )}
+            {isCrime && (
+              <ScoringNote label="What you're seeing">
+                Wards are ranked by recorded crimes per 1,000 residents (West Midlands Police). Darker = a higher
+                crime rate; #1 = the highest-crime ward. Rates are population-adjusted so large and small wards
+                compare fairly.
+              </ScoringNote>
+            )}
+            {isEdu && (
+              <ScoringNote label="How wards are scored">
+                Wards are shaded by the % of residents with no qualifications and ranked on the IMD 2025
+                education-skills domain (deciles 1–10).
+              </ScoringNote>
+            )}
+            {isYouth && (
+              <ScoringNote label="How wards are scored">
+                A modelled NEET-risk score ranks wards by youth disadvantage — youth UC claimants 50%, health
+                inactivity 30%, employment deprivation 20% — split into deciles 1–10. Decile 10 = highest risk.
+                This is an estimate; no official ward-level NEET data exists.
+              </ScoringNote>
+            )}
+            {isHousing && (
+              <ScoringNote label="How wards are scored">
+                A modelled housing-pressure score ranks wards on affordability — overcrowding 45%, rent-to-income
+                35%, price-to-income 20% — split into deciles 1–10. Decile 10 (darkest) = highest pressure. A
+                modelled estimate, not an official measure.
+              </ScoringNote>
+            )}
+            {isFiscal && (
+              <ScoringNote label="What you're seeing">
+                Each ward's net fiscal balance per head = revenue raised − (benefits + service spend). Positive
+                (green) = a net contributor to the public purse; negative (red) = a net recipient. All figures are
+                modelled estimates.
+              </ScoringNote>
+            )}
 
             {/* Breadcrumb + legend — employment */}
             {view === 'employment' && (
@@ -360,9 +505,9 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 {view === 'employment' && empSub === 'map'     && <MapView wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
                 {view === 'employment' && empSub === 'compare' && <Compare wards={wards} pinnedWards={pinnedWards} onUnpin={togglePin} />}
                 {/* Crime sub-views */}
-                {isCrime && crimeSub === 'crime-table' && <CrimeTable wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {isCrime && crimeSub === 'crime-grid'  && <CrimeGrid  wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {isCrime && crimeSub === 'crime-map'   && <CrimeMap   wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {isCrime && crimeSub === 'crime-table' && <CrimeTable wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
+                {isCrime && crimeSub === 'crime-grid'  && <CrimeGrid  wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
+                {isCrime && crimeSub === 'crime-map'   && <CrimeMap   wards={crimeWards} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
                 {/* Education sub-views */}
                 {isEdu && eduSub === 'edu-grid'  && <QualGrid  wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />}
                 {isEdu && eduSub === 'edu-table' && <QualTable wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />}
@@ -423,7 +568,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                     ))}
                     <div style={{ padding: '10px 0', fontSize: 9, fontFamily: 'var(--mono)', color: 'var(--muted2)', lineHeight: 1.6 }}>
                       All sources are publicly available. No API key required.
-                      {eduMeta.quals.source === 'live' ? ' Qualifications fetched live.' : ' Using embedded Census 2021 snapshot.'}
+                      {' Education: committed Census 2021 snapshot.'}
                     </div>
                   </div>
                 </>
@@ -440,30 +585,27 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               selectedFiscal ? (
                 <FiscalDetailPanel ward={fiscalWards.find(w => w.ward_code === selectedFiscal)!} wards={fiscalWards} onClose={() => setSelectedFiscal(null)} />
               ) : emptyBull
+            ) : isCrime ? (
+              selectedCrimeWard ? (
+                <CrimeDetailPanel ward={selectedCrimeWard} wards={crimeWards} onClose={() => setSelectedCrime(null)} />
+              ) : emptyBull
             ) : selected ? (
-              isCrime ? (
-                <CrimeDetailPanel
-                  ward={selected}
-                  wards={wards}
-                  onClose={() => setSelected(null)}
-                />
-              ) : (
-                <DetailPanel
-                  ward={selected}
-                  wards={wards}
-                  dsrc={dsrc}
-                  isPinned={pinnedWards.includes(selected.ward_code)}
-                  onPin={() => togglePin(selected.ward_code)}
-                  onClose={() => setSelected(null)}
-                  trendMode={trendMode}
-                  onTrendMode={setTrendMode}
-                />
-              )
+              <DetailPanel
+                ward={selected}
+                wards={wards}
+                dsrc={dsrc}
+                isPinned={pinnedWards.includes(selected.ward_code)}
+                onPin={() => togglePin(selected.ward_code)}
+                onClose={() => setSelected(null)}
+                trendMode={trendMode}
+                onTrendMode={setTrendMode}
+              />
             ) : (
               emptyBull
             )}
           </div>
         </div>
+        )}
         </div>{/* end .wrap */}
       </div>{/* end .dash-shell */}
     </>

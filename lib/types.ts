@@ -31,6 +31,104 @@ export interface Ward {
   neet_risk_decile: number;
 }
 
+// Real ward-level crime, official 69 wards (data.police.uk → public/data/crime-wards.json)
+export interface CrimeWard {
+  ward_code: string;
+  ward_name: string;
+  population: number;
+  crime_rate_per_1000: number;
+  crime_rank: number;
+  crime_categories: Record<string, number>;
+}
+
+// Universal Credit — % of residents on UC per ward. Shared shape used identically
+// by the Review preview (from a proposal) and the live Dashboards view (from the
+// published public/data/uc-wards.json) — so the same component renders in both.
+export interface UcWard {
+  ward_code: string;
+  ward_name: string;
+  uc_claimants: number;
+  population: number | null;
+  pct_on_uc: number | null;
+}
+export interface UcSource {
+  label: string; publisher: string; dataset: string; licence: string;
+  as_of: string; catalogueUrl: string; apiUrl: string;
+}
+export interface BenefitsData {
+  as_of: string;
+  city_pct: number | null;
+  total_claimants: number;
+  total_population: number;
+  sources: UcSource[];
+  wards: UcWard[];
+}
+
+// % of UC claimants in employment. The % is a share OF claimants, so we carry the
+// claimant count (denominator), a derived in-work headcount, and population for parity.
+export interface UcEmpWard {
+  ward_code: string;
+  ward_name: string;
+  pct_in_employment: number;
+  uc_claimants: number | null;
+  in_work_count: number | null;   // derived: claimants × % ÷ 100
+  population: number | null;
+}
+export interface UcEmpData {
+  as_of: string;
+  ward_mean_pct: number | null;
+  sources: UcSource[];
+  wards: UcEmpWard[];
+}
+
+// Claimant Count — unemployment-related benefits (UC "searching for work" + JSA) per ward.
+// The % is DWP's NATIVE "claimants as a proportion of residents aged 16-64" (not derived).
+// Counts are DWP-rounded to the nearest 5. trend[] aligns to ClaimantData.months.
+export interface ClaimantWard {
+  ward_code: string;
+  ward_name: string;
+  pct_16_64: number;             // native DWP proportion, Total
+  count: number;                 // latest-month claimant count, Total
+  male_count: number | null;
+  female_count: number | null;
+  male_pct: number | null;
+  female_pct: number | null;
+  age_16_24: number | null;      // latest-month counts by age band
+  age_25_49: number | null;
+  age_50_plus: number | null;
+  trend: (number | null)[];      // monthly counts, aligned to ClaimantData.months
+}
+export interface ClaimantData {
+  as_of: string;
+  months: string[];              // 'YYYY-MM' labels for the trend series
+  ward_mean_pct: number | null;
+  total_claimants: number;
+  sources: UcSource[];
+  wards: ClaimantWard[];
+}
+
+// Housing Benefit — % of households in receipt. Published at LOCAL-AUTHORITY level
+// only (no ward breakdown), so this shape is a comparison of the 7 West Midlands
+// boroughs plus honest benchmarks — NOT 69 wards. The view labels the missing
+// ward granularity explicitly. Same component renders in /review and Dashboards.
+export interface HbArea {
+  area_code: string;
+  area_name: string;
+  value: number;          // native % published by DWP (not derived, not modelled)
+  is_birmingham: boolean;
+  rank: number;           // 1 = highest % among the boroughs
+}
+export interface HousingBenefitData {
+  as_of: string;
+  metric: string;
+  geography: string;                          // 'local-authority' — drives the "no ward data" banner
+  areas: HbArea[];
+  benchmarks: { wmca: number | null; england: number | null };
+  birmingham_value: number | null;
+  birmingham_rank: number | null;
+  sources: UcSource[];
+}
+
 export interface DataSources {
   nomis: 'live' | 'cached';
   imd: 'live' | 'cached';
@@ -71,16 +169,13 @@ export interface EducationWard {
   qual_level3: number;
   qual_level4plus: number;
   qual_other: number;
-  imd_edu_decile: number;
-  imd_edu_score: number;
+  skills_decile: number;   // derived from % no quals: 1 = least, 10 = most skills-deprived
   edu_rank: number;
 }
 
-export type EduDataSource = 'live' | 'cached';
-
 export interface EduDataMeta {
-  quals: { wards: number | null; err: string | null; source: EduDataSource };
-  imd: { wards: number | null; err: string | null; source: EduDataSource };
+  wards: number;
+  vintage: string;
 }
 
 export interface FiscalBenefits {

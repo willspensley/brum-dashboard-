@@ -1,5 +1,6 @@
 'use client';
 import type { FiscalWard } from '@/lib/types';
+import Tip from '../../components/Tip';
 
 const COL = {
   surplus:  '#1a3a2a',
@@ -139,22 +140,30 @@ export default function FiscalDetailPanel({ ward: w, onClose }: { ward: FiscalWa
         </div>
 
         <div className="d-chips">
-          <div className="d-chip">
-            <div className="d-chip-lbl">Benefits / head</div>
-            <div className="d-chip-val" style={{ color: COL.deficit }}>{gbp(w.benefitPerHead)}</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Revenue / head</div>
-            <div className="d-chip-val" style={{ color: COL.revenue }}>{gbp(w.revenuePerHead)}</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Services / head</div>
-            <div className="d-chip-val" style={{ color: COL.services }}>{gbp(w.servicePerHead)}</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Population</div>
-            <div className="d-chip-val">{w.population.toLocaleString('en-GB')}</div>
-          </div>
+          <Tip text="Modelled annual benefit & welfare spend per resident — Universal Credit, State Pension, disability, Child Benefit and more. A modelled estimate, not an official figure.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Benefits / head</div>
+              <div className="d-chip-val" style={{ color: COL.deficit }}>{gbp(w.benefitPerHead)}</div>
+            </div>
+          </Tip>
+          <Tip text="Modelled tax & revenue raised per resident — income tax, National Insurance, council tax and a share of VAT. What the ward contributes to the public purse.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Revenue / head</div>
+              <div className="d-chip-val" style={{ color: COL.revenue }}>{gbp(w.revenuePerHead)}</div>
+            </div>
+          </Tip>
+          <Tip text="Modelled cost of public services consumed per resident — NHS, schools and local services. A modelled estimate.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Services / head</div>
+              <div className="d-chip-val" style={{ color: COL.services }}>{gbp(w.servicePerHead)}</div>
+            </div>
+          </Tip>
+          <Tip text="Resident population of the ward (Census 2021 base), used to express every figure on a per-head basis.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Population</div>
+              <div className="d-chip-val">{w.population.toLocaleString('en-GB')}</div>
+            </div>
+          </Tip>
         </div>
       </div>
 

@@ -3,7 +3,7 @@
 const DASHBOARDS = [
   {
     key: 'employment',
-    name: 'Employment Deprivation',
+    name: 'Employment & Benefits',
     sub: 'Claimant rates · IMD 2025 · 68 wards',
     finding: 'Ladywood 11.1% · Sutton Four Oaks 2.3% · gap unchanged 18 months',
     glyph: '▦',

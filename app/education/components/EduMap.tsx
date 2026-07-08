@@ -5,18 +5,18 @@ import type { EducationWard } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import { fetchWardBoundaries } from '@/lib/fetch-ward-boundaries';
 
-type Metric = 'none' | 'level4' | 'imd';
+type Metric = 'none' | 'level4' | 'skills';
 
 const METRIC_LABELS: Record<Metric, string> = {
   none: '% no qualifications',
   level4: '% degree (L4+)',
-  imd: 'IMD 2025 edu deprivation',
+  skills: 'Skills decile (no quals)',
 };
 
 const LEGEND_LABELS: Record<Metric, [string, string]> = {
   none: ['Low no-quals', 'High no-quals'],
   level4: ['High degree', 'Low degree'],
-  imd: ['Least deprived', 'Most deprived'],
+  skills: ['Least deprived', 'Most deprived'],
 };
 
 interface Props {
@@ -40,7 +40,7 @@ export default function EduMap({ wards, onSelect }: Props) {
   const minL4   = Math.min(...wards.map(w => w.qual_level4plus));
 
   function getColor(w: EducationWard, m: Metric): string {
-    if (m === 'imd') return RAMP[Math.max(0, Math.min(9, (w.imd_edu_decile || 1) - 1))];
+    if (m === 'skills') return RAMP[Math.max(0, Math.min(9, (w.skills_decile || 1) - 1))];
     if (m === 'level4') {
       const norm = maxL4 === minL4 ? 0.5 : (w.qual_level4plus - minL4) / (maxL4 - minL4);
       return RAMP[Math.max(0, Math.min(9, Math.round((1 - norm) * 9)))];
@@ -51,10 +51,10 @@ export default function EduMap({ wards, onSelect }: Props) {
 
   function getTooltip(w: EducationWard, m: Metric): string {
     const avg = wards.reduce((s, x) =>
-      s + (m === 'level4' ? x.qual_level4plus : m === 'imd' ? x.imd_edu_decile : x.qual_none), 0
+      s + (m === 'level4' ? x.qual_level4plus : m === 'skills' ? x.skills_decile : x.qual_none), 0
     ) / wards.length;
-    if (m === 'imd') {
-      return `<b>${w.ward_name}</b><br>Edu deprivation decile: ${w.imd_edu_decile} / 10<br>City avg: ${avg.toFixed(1)}`;
+    if (m === 'skills') {
+      return `<b>${w.ward_name}</b><br>Skills decile: ${w.skills_decile} / 10<br>City avg: ${avg.toFixed(1)}`;
     }
     const val = m === 'level4' ? w.qual_level4plus : w.qual_none;
     const diff = val - avg;
@@ -109,6 +109,7 @@ export default function EduMap({ wards, onSelect }: Props) {
           },
         }).addTo(map);
         layerRef.current = layer;
+        map.invalidateSize();
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;
@@ -165,7 +166,7 @@ export default function EduMap({ wards, onSelect }: Props) {
         <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', letterSpacing: '.08em', textTransform: 'uppercase', marginRight: 2 }}>
           Colour by
         </span>
-        {(['none', 'level4', 'imd'] as Metric[]).map(m => (
+        {(['none', 'level4', 'skills'] as Metric[]).map(m => (
           <button
             key={m}
             onClick={() => setMetric(m)}
@@ -186,14 +187,16 @@ export default function EduMap({ wards, onSelect }: Props) {
           <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)' }}>{LEGEND_LABELS[metric][1]}</span>
         </div>
       </div>
-      {status !== 'ready' && (
-        <div className="map-loading" style={{ height: 440 }}>
-          {status === 'loading'
-            ? <span>Loading ward boundaries…</span>
-            : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
-        </div>
-      )}
-      <div ref={containerRef} className="map-container" style={{ minHeight: 440, display: status === 'ready' ? 'block' : 'none' }} />
+      <div style={{ position: 'relative' }}>
+        <div ref={containerRef} className="map-container" style={{ minHeight: 440 }} />
+        {status !== 'ready' && (
+          <div className="map-loading" style={{ position: 'absolute', inset: 0, zIndex: 1100 }}>
+            {status === 'loading'
+              ? <span>Loading ward boundaries…</span>
+              : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

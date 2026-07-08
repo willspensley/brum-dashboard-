@@ -28,17 +28,8 @@ const SOURCES = [
     publisher: 'ONS / Birmingham City Observatory',
     href: 'https://cityobservatory.birmingham.gov.uk/explore/dataset/census-2021-highest-level-of-qualification-birmingham-wards/',
     apiHref: 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/census-2021-highest-level-of-qualification-birmingham-wards/records',
-    desc: 'Usual residents aged 16+ by highest level of qualification. 68 Birmingham wards. Census 2021 (March 2021).',
+    desc: 'Usual residents aged 16+ by highest level of qualification. All 69 Birmingham wards. Census 2021 (March 2021).',
     vintage: 'Census 2021',
-  },
-  {
-    name: 'IMD 2025 — Education, Skills & Training Domain',
-    endpoint: 'imd-indices-of-deprivation-2025-wmca-wards-2024',
-    publisher: 'DLUHC / Birmingham City Observatory',
-    href: 'https://cityobservatory.birmingham.gov.uk/explore/dataset/imd-indices-of-deprivation-2025-wmca-wards-2024/',
-    apiHref: 'https://cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets/imd-indices-of-deprivation-2025-wmca-wards-2024/records',
-    desc: 'Education, Skills and Training deprivation domain from the Index of Multiple Deprivation 2025. Ward-level deciles for all WMCA wards.',
-    vintage: 'IMD 2025',
   },
   {
     name: 'NOMIS — Census 2021 TS067 (Qualifications)',
@@ -80,9 +71,7 @@ export default function EducationDashboard({ wards, meta }: Props) {
   const sorted      = [...wards].sort((a, b) => b.qual_none - a.qual_none);
   const avgNone     = (wards.reduce((s, w) => s + w.qual_none, 0) / wards.length).toFixed(1);
   const avgL4       = (wards.reduce((s, w) => s + w.qual_level4plus, 0) / wards.length).toFixed(1);
-  const highDepriv  = wards.filter(w => w.imd_edu_decile >= 8).length;
-
-  const liveCount = [meta.quals.source, meta.imd.source].filter(s => s === 'live').length;
+  const highDepriv  = wards.filter(w => w.skills_decile >= 8).length;
 
   return (
     <>
@@ -97,7 +86,7 @@ export default function EducationDashboard({ wards, meta }: Props) {
             <div className="t-line vis">
               <span className="t-ts">—</span>
               <span className="tbadge tb-info">INIT</span>
-              <span className="t-msg"><b>{wards.length} wards</b> · {liveCount}/2 live layers · Census 2021 · IMD 2025</span>
+              <span className="t-msg"><b>{wards.length} wards</b> · Census 2021 · committed snapshot</span>
             </div>
           </div>
           <div className="t-prog-wrap"><div className="t-prog-fill" style={{ width: '100%' }} /></div>
@@ -117,16 +106,13 @@ export default function EducationDashboard({ wards, meta }: Props) {
             </div>
             <div>
               <div className="hdr-title">Birmingham — Education</div>
-              <div className="hdr-sub">68 wards · Census 2021 · IMD 2025</div>
+              <div className="hdr-sub">{meta.wards} wards · {meta.vintage}</div>
             </div>
           </div>
           <div />
           <div className="hdr-right">
-            <span className="dsbadge" title={meta.quals.source === 'live' ? `City Observatory — ${meta.quals.wards} wards` : meta.quals.err ?? 'Embedded Census 2021 snapshot'}>
-              Qualifications <span className={meta.quals.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
-            </span>
-            <span className="dsbadge" title={meta.imd.source === 'live' ? `IMD 2025 — ${meta.imd.wards} wards` : meta.imd.err ?? 'Embedded IMD scores'}>
-              IMD 2025 <span className={meta.imd.source === 'live' ? 'dot-live' : 'dot-cache'}>●</span>
+            <span className="dsbadge" title="ONS Census 2021 (TS067) — committed snapshot, all 69 Birmingham wards">
+              {meta.vintage} · {meta.wards} wards
             </span>
             <button className="refresh-btn" onClick={() => setShowSources(s => !s)}>
               <span>⌥</span> sources
@@ -158,9 +144,8 @@ export default function EducationDashboard({ wards, meta }: Props) {
                 </div>
               ))}
               <div className="src-foot">
-                All data is publicly available with no API key required.{' '}
-                <b style={{ color: 'var(--q-prosp)' }}>●</b> Live = fetched server-side this render.{' '}
-                <b style={{ color: '#7d4e36' }}>●</b> Cached = embedded snapshot used.
+                All data is publicly available with no API key required. Education figures are a
+                committed Census 2021 snapshot (ONS TS067 via NOMIS) — refreshed only on an ONS restatement.
               </div>
             </div>
           )}
@@ -187,7 +172,7 @@ export default function EducationDashboard({ wards, meta }: Props) {
                 <div className="stat-sub">Level 4+ (degree)</div>
               </div>
               <div className="stat-card">
-                <div className="stat-lbl">IMD edu decile 8–10</div>
+                <div className="stat-lbl">Skills decile 8–10</div>
                 <div className="stat-val">{highDepriv}</div>
                 <div className="stat-sub">most skills-deprived wards</div>
               </div>
@@ -272,7 +257,7 @@ export default function EducationDashboard({ wards, meta }: Props) {
                     </div>
                   ))}
                   <div style={{ padding: '10px 0', fontSize: 9, fontFamily: 'var(--mono)', color: 'var(--muted2)', lineHeight: 1.6 }}>
-                    All sources are publicly available. No API key required. Data loaded server-side on each request with a 24hr cache.
+                    All sources are publicly available. No API key required. Education data is a committed Census 2021 snapshot.
                   </div>
                 </div>
               </>

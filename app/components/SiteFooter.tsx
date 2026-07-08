@@ -15,7 +15,7 @@ export default function SiteFooter() {
               </div>
             </div>
             <p className="site-foot-blurb">
-              Open-source civic intelligence for Birmingham City Council. Every line of code, every dataset, every methodology — public.
+              Open-source civic intelligence for Birmingham. Every line of code, every dataset, every methodology — public.
             </p>
           </div>
 

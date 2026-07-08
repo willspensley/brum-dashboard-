@@ -34,3 +34,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local dev logs & scratch
+boot.log
+boot.err.log
+d3.log
+.devserver.log
+_analyze*.js
+.claude/

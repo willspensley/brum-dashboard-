@@ -1,0 +1,99 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import type { UcWard } from '@/lib/types';
+import { RAMP } from '@/lib/constants';
+import { fetchWardBoundaries } from '@/lib/fetch-ward-boundaries';
+
+// Modelled on CrimeMap — same Leaflet setup, CARTO tiles, ink ramp, tooltip.
+interface Props {
+  wards: UcWard[];
+  onSelect: (code: string) => void;
+}
+
+export default function BenefitsMap({ wards, onSelect }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [errMsg, setErrMsg] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let mapInstance: any = null;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const maxPct = Math.max(...wards.map(w => w.pct_on_uc ?? 0), 1);
+    const wardIndex = Object.fromEntries(wards.map(w => [w.ward_code, w]));
+    const rampColor = (pct: number | null) => {
+      if (pct == null) return '#ccc';
+      const idx = Math.round((pct / maxPct) * 9);
+      return RAMP[Math.max(0, Math.min(9, idx))];
+    };
+
+    (async () => {
+      try {
+        const [L, geo] = await Promise.all([
+          import('leaflet').then(m => m.default),
+          fetchWardBoundaries(),
+        ]);
+        if (cancelled) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
+
+        const map = L.map(container, { zoomControl: true, scrollWheelZoom: false })
+          .setView([52.48, -1.9], 11);
+        mapInstance = map;
+        if (cancelled) { map.remove(); return; }
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap contributors © CARTO',
+          maxZoom: 18,
+        }).addTo(map);
+
+        L.geoJSON(geo, {
+          style: feat => {
+            const w = wardIndex[feat?.properties?.WD22CD ?? ''];
+            return { fillColor: rampColor(w?.pct_on_uc ?? null), fillOpacity: 0.7, color: '#f5f3ee', weight: 1.2 };
+          },
+          onEachFeature: (feat, layer) => {
+            const code = feat.properties?.WD22CD ?? '';
+            const w = wardIndex[code];
+            if (w) {
+              layer.bindTooltip(
+                `<b>${w.ward_name}</b><br>${w.pct_on_uc ?? '—'}% on UC<br>${w.uc_claimants.toLocaleString()} of ${w.population?.toLocaleString() ?? '—'}`,
+                { sticky: true });
+              layer.on('click', () => onSelect(code));
+            }
+          },
+        }).addTo(map);
+
+        map.invalidateSize();
+        setStatus('ready');
+      } catch (e) {
+        if (cancelled) return;
+        setErrMsg(e instanceof Error ? e.message : String(e));
+        setStatus('error');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (mapInstance) { try { mapInstance.remove(); } catch { /* gone */ } mapInstance = null; }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div ref={containerRef} className="map-container" style={{ height: '100%', minHeight: 420 }} />
+      {status !== 'ready' && (
+        <div className="map-loading" style={{ position: 'absolute', inset: 0, zIndex: 1100 }}>
+          {status === 'loading'
+            ? <span>Loading ward boundaries…</span>
+            : <span style={{ color: 'var(--q-disad)', fontFamily: 'var(--mono)', fontSize: 11 }}>⚠ Map unavailable: {errMsg}</span>}
+        </div>
+      )}
+    </div>
+  );
+}

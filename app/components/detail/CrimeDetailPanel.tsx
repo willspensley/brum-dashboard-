@@ -1,15 +1,17 @@
-import type { Ward } from '@/lib/types';
-import { CRIME_RAMP, CRIME_CATS, MONTHS } from '@/lib/constants';
+import type { CrimeWard } from '@/lib/types';
+import { CRIME_RAMP, CRIME_CATS } from '@/lib/constants';
+import Tip from '../Tip';
 
 interface Props {
-  ward: Ward;
-  wards: Ward[];
+  ward: CrimeWard;
+  wards: CrimeWard[];
   onClose: () => void;
 }
 
 export default function CrimeDetailPanel({ ward: w, wards, onClose }: Props) {
   const maxRate = Math.max(...wards.map(x => x.crime_rate_per_1000));
-  const avgRate = (wards.reduce((s, x) => s + x.crime_rate_per_1000, 0) / wards.length).toFixed(1);
+  const avgRateNum = wards.reduce((s, x) => s + x.crime_rate_per_1000, 0) / wards.length;
+  const avgRate = avgRateNum.toFixed(1);
   const rampIdx = Math.round((w.crime_rate_per_1000 / maxRate) * 9);
   const rampColor = CRIME_RAMP[Math.max(0, Math.min(9, rampIdx))];
 
@@ -17,10 +19,6 @@ export default function CrimeDetailPanel({ ward: w, wards, onClose }: Props) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 8);
   const maxCat = cats[0]?.[1] ?? 1;
-
-  const trend = w.crime_trend_12m ?? [];
-  const trendMax = Math.max(...(trend.length ? trend : [1]));
-  const trendMonths = MONTHS.slice(0, 12);
 
   return (
     <div>
@@ -35,34 +33,40 @@ export default function CrimeDetailPanel({ ward: w, wards, onClose }: Props) {
         </div>
 
         <div className="d-chips">
-          <div className="d-chip">
-            <div className="d-chip-lbl">Crimes / 1000</div>
-            <div className="d-chip-val" style={{ color: rampColor }}>{w.crime_rate_per_1000.toFixed(1)}</div>
-            <div className="d-chip-sub">city avg {avgRate}</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">City rank</div>
-            <div className="d-chip-val">#{w.crime_rank}</div>
-            <div className="d-chip-sub">of {wards.length} wards</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Year on year</div>
-            <div className="d-chip-val" style={{ color: w.crime_yoy_pct > 0 ? 'var(--q-disad)' : 'var(--q-prosp)' }}>
-              {w.crime_yoy_pct > 0 ? '+' : ''}{w.crime_yoy_pct.toFixed(1)}%
+          <Tip text="Recorded crimes per 1,000 residents over the period (West Midlands Police, via data.police.uk). Dividing by population lets large and small wards be compared fairly. 'city avg' is the Birmingham mean.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Crimes / 1000</div>
+              <div className="d-chip-val" style={{ color: rampColor }}>{w.crime_rate_per_1000.toFixed(1)}</div>
+              <div className="d-chip-sub">city avg {avgRate}</div>
             </div>
-            <div className="d-chip-sub">modelled</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Intensity</div>
-            <div className="d-chip-val" style={{ color: rampColor }}>{Math.round((w.crime_rate_per_1000 / maxRate) * 100)}%</div>
-            <div className="d-chip-sub">of city max</div>
-          </div>
+          </Tip>
+          <Tip text="Where this ward sits among all Birmingham wards by crime rate. #1 = the highest recorded crime rate in the city.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">City rank</div>
+              <div className="d-chip-val">#{w.crime_rank}</div>
+              <div className="d-chip-sub">of {wards.length} wards</div>
+            </div>
+          </Tip>
+          <Tip text="This ward's crime rate divided by the Birmingham average. 1.0× = exactly average; 2.0× = twice the city average.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">vs city average</div>
+              <div className="d-chip-val">{(w.crime_rate_per_1000 / avgRateNum).toFixed(1)}×</div>
+              <div className="d-chip-sub">{w.crime_rate_per_1000 >= avgRateNum ? 'above' : 'below'} average</div>
+            </div>
+          </Tip>
+          <Tip text="This ward's crime rate as a share of the city's highest-crime ward (which is 100%). A quick read of how close this ward is to the worst in Birmingham.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Intensity</div>
+              <div className="d-chip-val" style={{ color: rampColor }}>{Math.round((w.crime_rate_per_1000 / maxRate) * 100)}%</div>
+              <div className="d-chip-sub">of city max</div>
+            </div>
+          </Tip>
         </div>
       </div>
 
       {cats.length > 0 && (
-        <div className="d-sec">
-          <div className="d-sec-ttl">Category breakdown <span className="d-modelled">(modelled)</span></div>
+        <div className="d-sec" style={{ borderBottom: 'none' }}>
+          <div className="d-sec-ttl">Category breakdown</div>
           <div className="crime-cats">
             {cats.map(([cat, count]) => (
               <div key={cat} className="crime-cat-row">
@@ -72,25 +76,6 @@ export default function CrimeDetailPanel({ ward: w, wards, onClose }: Props) {
                 </div>
                 <div className="crime-cat-count">{count}</div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {trend.length > 0 && (
-        <div className="d-sec" style={{ borderBottom: 'none' }}>
-          <div className="d-sec-ttl">12-month trend <span className="d-modelled">(modelled)</span></div>
-          <svg viewBox="0 0 240 60" className="sparkline-svg" style={{ maxWidth: '100%' }}>
-            <polyline
-              points={trend.map((v, i) => `${(i / 11) * 230 + 5},${55 - (v / trendMax) * 50}`).join(' ')}
-              fill="none"
-              stroke={rampColor}
-              strokeWidth="1.5"
-            />
-          </svg>
-          <div className="spark-months" style={{ maxWidth: '100%' }}>
-            {trendMonths.map((m, i) => (
-              <span key={i} className="spark-month">{m}</span>
             ))}
           </div>
         </div>

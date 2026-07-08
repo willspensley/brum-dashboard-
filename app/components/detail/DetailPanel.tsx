@@ -1,7 +1,8 @@
 import type { Ward, DataSources } from '@/lib/types';
-import { dc, Q_COLORS, rankOf, quadrantNarrative, quadrantSummary } from '@/lib/constants';
+import { dc, Q_COLORS, rankOf, quadrantSummary } from '@/lib/constants';
 import { extras } from '@/lib/synth';
 import TrendChart from './TrendChart';
+import Tip from '../Tip';
 
 interface Props {
   ward: Ward;
@@ -28,7 +29,6 @@ export default function DetailPanel({ ward: w, wards, dsrc, isPinned, onPin, onC
   const earnRefPos = Math.min(100, (avgEarn / 55) * 100);
   const gvaPos = Math.min(100, (w.gva / gvaMax) * 100);
   const gvaRefPos = Math.min(100, (gvaAvg / gvaMax) * 100);
-  const narrative = quadrantNarrative(wards, w);
 
   return (
     <div>
@@ -46,41 +46,44 @@ export default function DetailPanel({ ward: w, wards, dsrc, isPinned, onPin, onC
         </div>
 
         <div className="d-chips">
-          <div className="d-chip">
-            <div className="d-chip-lbl">GVA per head</div>
-            <div className="d-chip-val">£{w.gva.toFixed(1)}k</div>
-            <div className="d-chip-sub">rank {gvaRank}/68</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">IMD employment</div>
-            <div className="d-chip-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
-            <div className="d-chip-sub">rank {depRank} most deprived</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">
-              Claimant{' '}
-              <span style={{ fontSize: 8, background: dsrc.nomis === 'live' ? '#1a3a2a14' : '#7d4e3614', color: dsrc.nomis === 'live' ? 'var(--q-prosp)' : '#7d4e36', border: `1px solid ${dsrc.nomis === 'live' ? '#1a3a2a44' : '#7d4e3644'}`, padding: '1px 5px', fontFamily: 'var(--mono)', marginLeft: 5 }}>
-                {dsrc.nomis === 'live' ? 'LIVE' : 'CACHED'}
-              </span>
+          <Tip text="GVA (Gross Value Added) per head is the value of all goods and services produced in the ward each year, divided by its population — a measure of workplace economic output. Higher means more productive. Rank is out of 68 Birmingham wards.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">GVA per head</div>
+              <div className="d-chip-val">£{w.gva.toFixed(1)}k</div>
+              <div className="d-chip-sub">rank {gvaRank}/68</div>
             </div>
-            <div className="d-chip-val">{w.claimant_rate}%</div>
-            <div className="d-chip-sub">avg {avgCC}%</div>
-          </div>
-          <div className="d-chip">
-            <div className="d-chip-lbl">Median earnings</div>
-            <div className="d-chip-val">£{w.earnings}k</div>
-            <div className="d-chip-sub">est · avg £{avgEarn}k</div>
-          </div>
+          </Tip>
+          <Tip text="The IMD 2025 Employment domain measures the share of working-age residents involuntarily out of work (claiming benefits, incapacity or caring). Higher % = more employment deprivation. Rank 1 = the most deprived ward in the city.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">IMD employment</div>
+              <div className="d-chip-val">{(w.imd_employment_score * 100).toFixed(1)}%</div>
+              <div className="d-chip-sub">rank {depRank} most deprived</div>
+            </div>
+          </Tip>
+          <Tip text="Claimant count — the % of working-age residents claiming unemployment-related benefits (Universal Credit / JSA), from NOMIS. LIVE = fetched this load; CACHED = embedded snapshot. 'avg' is the Birmingham mean.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">
+                Claimant{' '}
+                <span style={{ fontSize: 8, background: dsrc.nomis === 'live' ? '#1a3a2a14' : '#7d4e3614', color: dsrc.nomis === 'live' ? 'var(--q-prosp)' : '#7d4e36', border: `1px solid ${dsrc.nomis === 'live' ? '#1a3a2a44' : '#7d4e3644'}`, padding: '1px 5px', fontFamily: 'var(--mono)', marginLeft: 5 }}>
+                  {dsrc.nomis === 'live' ? 'LIVE' : 'CACHED'}
+                </span>
+              </div>
+              <div className="d-chip-val">{w.claimant_rate}%</div>
+              <div className="d-chip-sub">avg {avgCC}%</div>
+            </div>
+          </Tip>
+          <Tip text="Estimated median resident earnings (£, thousands per year), modelled from the ward's deprivation profile — an estimate, not official ASHE earnings data (hence 'est'). 'avg' is the Birmingham mean.">
+            <div className="d-chip">
+              <div className="d-chip-lbl">Median earnings</div>
+              <div className="d-chip-val">£{w.earnings}k</div>
+              <div className="d-chip-sub">est · avg £{avgEarn}k</div>
+            </div>
+          </Tip>
         </div>
 
         <button className={`pin-btn${isPinned ? ' pinned' : ''}`} onClick={onPin}>
           {isPinned ? '▣ Pinned for Compare — click to unpin' : '□ Pin for Compare'}
         </button>
-      </div>
-
-      <div className="d-sec">
-        <div className="d-sec-ttl">Quadrant interpretation</div>
-        <p className="d-narrative">{narrative}</p>
       </div>
 
       <div className="d-sec">
