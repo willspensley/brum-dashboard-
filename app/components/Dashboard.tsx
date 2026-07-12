@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData, CrimeWard, BenefitsData, UcEmpData, HousingBenefitData, ClaimantData } from '@/lib/types';
+import type { Ward, DataSources, DataMeta, EducationWard, EduDataMeta, NeetCityData, CrimeWard, BenefitsData, UcEmpData, HousingBenefitData, ClaimantData, UcCombinedData, BenefitsBillData, TwoChildData, ChildPovertyData, ConMoneyData, PipData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import GridView from './tabs/GridView';
 import TableView from './tabs/TableView';
@@ -30,6 +30,12 @@ import BenefitsDashboard from '../benefits/components/BenefitsDashboard';
 import UcEmpDashboard from '../uc-employment/components/UcEmpDashboard';
 import HousingBenefitView from '../housing-benefit/components/HousingBenefitView';
 import ClaimantDashboard from '../claimant-count/components/ClaimantDashboard';
+import UcCombinedDashboard from '../uc-combined/components/UcCombinedDashboard';
+import BenefitsBillView from '../benefits-bill/components/BenefitsBillView';
+import TwoChildView from '../two-child/components/TwoChildView';
+import ChildPovertyDashboard from '../child-poverty/components/ChildPovertyDashboard';
+import ConMoneyDashboard from '../constituency-money/components/ConMoneyDashboard';
+import PipDashboard from '../pip/components/PipDashboard';
 import ScoringNote from './brand/ScoringNote';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
@@ -37,7 +43,7 @@ const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: fa
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal' | 'benefits' | 'ucemp' | 'hbenefit' | 'claimant';
+type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal' | 'benefits' | 'ucemp' | 'hbenefit' | 'claimant' | 'bill' | 'twochild' | 'childpov' | 'conmoney' | 'pip';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -97,6 +103,12 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const [ucEmpData, setUcEmpData] = useState<UcEmpData | null>(null);
   const [hbData, setHbData] = useState<HousingBenefitData | null>(null);
   const [claimantData, setClaimantData] = useState<ClaimantData | null>(null);
+  const [ucCombinedData, setUcCombinedData] = useState<UcCombinedData | null>(null);
+  const [billData, setBillData] = useState<BenefitsBillData | null>(null);
+  const [twoChildData, setTwoChildData] = useState<TwoChildData | null>(null);
+  const [childPovData, setChildPovData] = useState<ChildPovertyData | null>(null);
+  const [conMoneyData, setConMoneyData] = useState<ConMoneyData | null>(null);
+  const [pipData, setPipData] = useState<PipData | null>(null);
 
   // Load PUBLISHED dashboards at runtime. Each is present only once its proposal has
   // been accepted in /review (which writes public/data/<id>.json). Client-side fetch →
@@ -117,6 +129,70 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
       .then(j => {
         if (j?.wards) setUcEmpData({
           as_of: j.as_of, ward_mean_pct: j.ward_mean_pct,
+          sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    // uc-combined upgrades the Universal Credit tab in place once accepted.
+    fetch('/data/uc-combined.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.wards && j?.city) setUcCombinedData({
+          as_of: j.as_of, city: j.city, sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/benefits-bill.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.lines) setBillData({
+          year: j.year ?? '', total_m: j.total_m ?? 0, per_head: j.per_head ?? null,
+          population: j.population ?? null, sources: j.sources ?? (j.source ? [j.source] : []), lines: j.lines,
+          history: j.history ?? [],
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/two-child.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.constituencies && j?.city) setTwoChildData({
+          as_of: j.as_of, child_element_month: j.child_element_month ?? 292.81,
+          city: j.city, sources: j.sources ?? (j.source ? [j.source] : []), constituencies: j.constituencies,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/pip-conditions.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.categories) setPipData({
+          years: j.years ?? [], categories: j.categories, conditions: j.conditions ?? [],
+          gb_total_real_latest: j.gb_total_real_latest ?? 0, gb_total_nominal_latest: j.gb_total_nominal_latest ?? 0,
+          birmingham_pip_m: j.birmingham_pip_m ?? null, sources: j.sources ?? (j.source ? [j.source] : []),
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/constituency-money.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.constituencies) setConMoneyData({
+          year: j.year ?? '', benefit_labels: j.benefit_labels ?? {}, uc_years: j.uc_years ?? [],
+          city: j.city ?? { sum_m: 0, la_total_m: 0, drift_pct: 0 },
+          sources: j.sources ?? (j.source ? [j.source] : []), constituencies: j.constituencies,
+        });
+      })
+      .catch(() => { /* not published yet */ });
+
+    fetch('/data/child-poverty.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => {
+        if (j?.wards && j?.years) setChildPovData({
+          as_of: j.as_of, years: j.years,
+          city: j.city ?? { city_series: null, england_series: null, city_latest: null, england_latest: null },
           sources: j.sources ?? (j.source ? [j.source] : []), wards: j.wards,
         });
       })
@@ -205,6 +281,11 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const isUcEmp = view === 'ucemp';
   const isHBenefit = view === 'hbenefit';
   const isClaimant = view === 'claimant';
+  const isBill = view === 'bill';
+  const isTwoChild = view === 'twochild';
+  const isChildPov = view === 'childpov';
+  const isConMoney = view === 'conmoney';
+  const isPip = view === 'pip';
 
   const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
   const fiscalWards: FiscalWard[] = useMemo(() => buildFiscalWards(wards), [wards]);
@@ -302,6 +383,36 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 <span className="dash-live-dot">●</span>
               </button>
             )}
+            {billData && (
+              <button className={`dash-nav-btn${isBill ? ' active' : ''}`} onClick={() => setView('bill')}>
+                <span className="dash-nav-glyph">£</span> Benefits Bill
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {twoChildData && (
+              <button className={`dash-nav-btn${isTwoChild ? ' active' : ''}`} onClick={() => setView('twochild')}>
+                <span className="dash-nav-glyph">◔</span> Two-Child Limit
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {childPovData && (
+              <button className={`dash-nav-btn${isChildPov ? ' active' : ''}`} onClick={() => setView('childpov')}>
+                <span className="dash-nav-glyph">◒</span> Child Poverty
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {conMoneyData && (
+              <button className={`dash-nav-btn${isConMoney ? ' active' : ''}`} onClick={() => setView('conmoney')}>
+                <span className="dash-nav-glyph">◈</span> Money Map (£)
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
+            {pipData && (
+              <button className={`dash-nav-btn${isPip ? ' active' : ''}`} onClick={() => setView('pip')}>
+                <span className="dash-nav-glyph">✚</span> PIP Deep Dive
+                <span className="dash-live-dot">●</span>
+              </button>
+            )}
           </div>
 
           {/* Ask Ozzy link */}
@@ -344,12 +455,18 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </button>
               <div>
                 <div className="hdr-title">
-                  {isClaimant ? 'Claimant Count' : isHBenefit ? 'Housing Benefit' : isUcEmp ? 'UC Claimants in Work' : isBenefits ? 'Universal Credit' : isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment & Benefits'}
+                  {isPip ? 'PIP: Where the Money Goes' : isConMoney ? 'The Constituency Money Map' : isChildPov ? 'Child Poverty' : isBill ? 'The Benefits Bill' : isTwoChild ? 'Two-Child Limit' : isClaimant ? 'Claimant Count' : isHBenefit ? 'Housing Benefit' : isUcEmp ? 'UC Claimants in Work' : isBenefits ? 'Universal Credit' : isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment & Benefits'}
                 </div>
                 <div className="hdr-sub">
-                  {isClaimant ? `69 wards · % of 16–64 residents claiming · ${claimantData?.as_of ?? ''} · DWP`
+                  {isPip ? `Great Britain · by medical condition · 2013/14–${pipData?.years.at(-1) ?? ''} · £${((pipData?.gb_total_real_latest ?? 0) / 1000).toFixed(1)}bn real`
+                    : isConMoney ? `9 constituencies · actual DWP £ by benefit · ${conMoneyData?.year ?? ''} · £${(((conMoneyData?.city.sum_m ?? 0)) / 1000).toFixed(2)}bn`
+                    : isChildPov ? `69 wards · % of children 0–15 in absolute low income · ${childPovData?.as_of ?? ''} · DWP/HMRC`
+                    : isBill ? `Local authority · actual DWP expenditure · ${billData?.year ?? ''} · £${((billData?.total_m ?? 0) / 1000).toFixed(2)}bn`
+                    : isTwoChild ? `Constituencies · policy abolished 6 Apr 2026 · ${twoChildData?.as_of ?? ''} · DWP`
+                    : isClaimant ? `69 wards · % of 16–64 residents claiming · ${claimantData?.as_of ?? ''} · DWP`
                     : isHBenefit ? `Local authority · no ward breakdown · % of households · ${hbData?.as_of ?? ''} · DWP`
                     : isUcEmp ? `69 wards · % of claimants in employment · ${ucEmpData?.as_of ?? ''} · DWP`
+                    : isBenefits && ucCombinedData ? `69 wards · total / in work / not in work · ${ucCombinedData.as_of} · DWP`
                     : isBenefits ? `69 wards · % of residents on UC · ${benefitsData?.as_of ?? ''} · DWP`
                     : isEdu ? '68 wards · qualifications & skills'
                     : isYouth ? '68 wards · 16–24 NEET risk'
@@ -368,10 +485,22 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
         </div>
         <div className="hdr-dancetty" aria-hidden="true" />
 
-        {isClaimant && claimantData ? (
+        {isPip && pipData ? (
+          <PipDashboard data={pipData} />
+        ) : isConMoney && conMoneyData ? (
+          <ConMoneyDashboard data={conMoneyData} />
+        ) : isChildPov && childPovData ? (
+          <ChildPovertyDashboard data={childPovData} />
+        ) : isBill && billData ? (
+          <BenefitsBillView data={billData} />
+        ) : isTwoChild && twoChildData ? (
+          <TwoChildView data={twoChildData} />
+        ) : isClaimant && claimantData ? (
           <ClaimantDashboard data={claimantData} />
         ) : isHBenefit && hbData ? (
           <HousingBenefitView data={hbData} />
+        ) : isBenefits && ucCombinedData ? (
+          <UcCombinedDashboard data={ucCombinedData} />
         ) : isBenefits && benefitsData ? (
           <BenefitsDashboard data={benefitsData} />
         ) : isUcEmp && ucEmpData ? (

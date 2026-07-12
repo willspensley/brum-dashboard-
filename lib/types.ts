@@ -81,6 +81,149 @@ export interface UcEmpData {
   wards: UcEmpWard[];
 }
 
+// Universal Credit COMBINED — the full per-ward picture: total on UC, in work,
+// NOT in work (derived: claimants − in-work), % of residents. Upgrades the UC tab.
+export interface UcCombinedWard {
+  ward_code: string;
+  ward_name: string;
+  uc_claimants: number;
+  population: number | null;
+  pct_on_uc: number | null;           // derived: claimants ÷ residents × 100
+  pct_in_employment: number | null;   // native DWP %
+  in_work_count: number | null;       // derived: claimants × % ÷ 100
+  not_in_work_count: number | null;   // derived: claimants − in-work
+}
+export interface UcCombinedData {
+  as_of: string;
+  city: { total: number; in_work: number; not_in_work: number; pct_pop: number | null; pct_not_in_work: number | null };
+  sources: UcSource[];
+  wards: UcCombinedWard[];
+}
+
+// Benefits Bill — DWP's actual £ expenditure in Birmingham by benefit (LA-level only;
+// ward-level £ does not exist anywhere). From the DWP benefit-expenditure-by-LA tables.
+export interface BenefitLine {
+  id: string;
+  label: string;
+  amount_m: number;                   // £ million, nominal
+  group: 'working-age' | 'pensioner' | 'mixed';
+  note?: string;
+}
+export interface BillYear {
+  year: string;                       // e.g. "2007/08"
+  total_m: number;                    // Birmingham total, £m nominal (always real)
+  gb_total_m: number | null;          // Great Britain total, same workbook
+  share_pct: number | null;           // derived: Birmingham ÷ GB × 100
+  components: Record<string, number> | null;  // canonical id → £m; null = failed the
+                                      // sum-check against the workbook's own Total (withheld)
+  partial?: boolean;                  // sheet's Total includes benefits it doesn't itemise
+                                      // (e.g. no UC column in 2018/19) — listed benefits are
+                                      // cluster-validated, but the full stack is withheld
+  unlisted_m?: number;                // £m the sheet's Total contains but doesn't itemise
+  uc_excluded_from_printed_total?: boolean;  // vintage quirk: printed Total omitted the UC
+                                      // column; total_m is corrected to Total+UC (both real)
+  anomalies?: string[];               // source defects in DWP's own sheet (value withheld)
+}
+export interface BenefitsBillData {
+  year: string;                       // e.g. "2024/25"
+  total_m: number;
+  population: number | null;
+  per_head: number | null;            // derived: total ÷ residents
+  sources: UcSource[];
+  lines: BenefitLine[];
+  history?: BillYear[];               // 2002/03 → latest
+}
+
+// PIP deep dive — GB expenditure by reported medical condition, 2013/14 → latest,
+// nominal + real (2025/26 prices), working-age/pension-age splits. GREAT BRITAIN ONLY
+// (no sub-national £-by-condition exists); Birmingham's REAL total PIP £ is carried
+// as context from the by-LA workbook.
+export interface PipCategory {
+  name: string;
+  nominal: (number | null)[] | null;
+  real: (number | null)[];
+  wa_real: (number | null)[] | null;
+  pa_real: (number | null)[] | null;
+}
+export interface PipCondition {
+  name: string;
+  real: (number | null)[];
+}
+export interface PipData {
+  years: string[];
+  categories: PipCategory[];         // sorted by latest real, desc
+  conditions: PipCondition[];        // top 30 granular
+  gb_total_real_latest: number;
+  gb_total_nominal_latest: number;
+  birmingham_pip_m: number | null;
+  sources: UcSource[];
+}
+
+// Constituency Money Map — DWP's ACTUAL £ per benefit for Birmingham's 9 parliamentary
+// constituencies (2024 boundaries), 2024/25, each row checksum-validated against the
+// workbook's own Total. UC additionally carries a 2019/20→2024/25 trend (the only
+// benefit DWP recalculated that far back onto the new boundaries).
+export interface ConMoneyConstituency {
+  code: string;
+  name: string;
+  total_m: number;
+  benefits: Record<string, number>;    // canonical id → £m
+  uc_trend: number[] | null;           // aligned to ConMoneyData.uc_years
+}
+export interface ConMoneyData {
+  year: string;
+  benefit_labels: Record<string, string>;
+  uc_years: string[];
+  city: { sum_m: number; la_total_m: number; drift_pct: number };
+  sources: UcSource[];
+  constituencies: ConMoneyConstituency[];
+}
+
+// Two-Child Limit — final DWP statistics (policy abolished 6 Apr 2026), Birmingham
+// constituencies (no ward breakdown exists). £ gains derived from official counts ×
+// the official child-element rate, labelled derived.
+export interface TwoChildConstituency {
+  name: string;
+  households_affected: number;
+  children_affected: number;          // children denied a child element
+  households_gaining: number;         // likely to see higher award after removal
+  derived_annual_gain_m: number;      // children_affected × child element × 12 (£m)
+}
+export interface TwoChildData {
+  as_of: string;
+  child_element_month: number;        // official rate, £/child/month
+  city: {
+    households_affected: number; children_in_households: number; children_affected: number;
+    households_gaining: number; children_in_gaining: number; derived_annual_gain_m: number;
+  };
+  sources: UcSource[];
+  constituencies: TwoChildConstituency[];
+}
+
+// Child Poverty — % of children 0-15 in ABSOLUTE low-income families, per ward,
+// full annual series 2015/16 → latest. Native DWP/HMRC %; benchmarks are the REAL
+// Birmingham-LA and England-mean series (not synthesised).
+export interface ChildPovertyWard {
+  ward_code: string;
+  ward_name: string;
+  latest_pct: number;
+  first_pct: number | null;
+  delta_pp: number | null;              // derived: latest − first, percentage points
+  series: (number | null)[];            // aligned to ChildPovertyData.years
+}
+export interface ChildPovertyData {
+  as_of: string;
+  years: string[];                      // e.g. ['2015/16', …, '2024/25']
+  city: {
+    city_series: (number | null)[] | null;
+    england_series: (number | null)[] | null;
+    city_latest: number | null;
+    england_latest: number | null;
+  };
+  sources: UcSource[];
+  wards: ChildPovertyWard[];
+}
+
 // Claimant Count — unemployment-related benefits (UC "searching for work" + JSA) per ward.
 // The % is DWP's NATIVE "claimants as a proportion of residents aged 16-64" (not derived).
 // Counts are DWP-rounded to the nearest 5. trend[] aligns to ClaimantData.months.

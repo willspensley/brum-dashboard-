@@ -59,6 +59,23 @@ export async function POST(req: Request) {
     benchmarks?: Record<string, unknown>;
     geography?: string;
     months?: unknown[];                // trend-series month labels (e.g. claimant count)
+    years?: unknown[];                 // annual-series labels (e.g. child poverty)
+    city?: Record<string, unknown>;    // city-level rollup (uc-combined, two-child)
+    lines?: unknown[];                 // benefit lines (benefits-bill)
+    history?: unknown[];               // 23-year £ history (benefits-bill)
+    constituencies?: unknown[];        // constituency rows (two-child)
+    year?: string;
+    total_m?: number;
+    per_head?: number | null;
+    population?: number | null;
+    child_element_month?: number;
+    benefit_labels?: Record<string, unknown>;
+    uc_years?: unknown[];
+    categories?: unknown[];            // PIP condition categories
+    conditions?: unknown[];            // PIP granular conditions
+    gb_total_real_latest?: number;
+    gb_total_nominal_latest?: number;
+    birmingham_pip_m?: number | null;
     source?: Record<string, unknown>;
     sources?: unknown[];
     metric?: string;
@@ -95,6 +112,23 @@ export async function POST(req: Request) {
       ...(proposal.benchmarks ? { benchmarks: proposal.benchmarks } : {}),
       ...(proposal.areas ? { areas: proposal.areas } : {}),
       ...(proposal.months ? { months: proposal.months } : {}),
+      ...(proposal.years ? { years: proposal.years } : {}),
+      ...(proposal.city ? { city: proposal.city } : {}),
+      ...(proposal.lines ? { lines: proposal.lines } : {}),
+      ...(proposal.history ? { history: proposal.history } : {}),
+      ...(proposal.constituencies ? { constituencies: proposal.constituencies } : {}),
+      ...(proposal.year ? { year: proposal.year } : {}),
+      ...(proposal.total_m != null ? { total_m: proposal.total_m } : {}),
+      ...(proposal.per_head != null ? { per_head: proposal.per_head } : {}),
+      ...(proposal.population != null ? { population: proposal.population } : {}),
+      ...(proposal.child_element_month != null ? { child_element_month: proposal.child_element_month } : {}),
+      ...(proposal.benefit_labels ? { benefit_labels: proposal.benefit_labels } : {}),
+      ...(proposal.uc_years ? { uc_years: proposal.uc_years } : {}),
+      ...(proposal.categories ? { categories: proposal.categories } : {}),
+      ...(proposal.conditions ? { conditions: proposal.conditions } : {}),
+      ...(proposal.gb_total_real_latest != null ? { gb_total_real_latest: proposal.gb_total_real_latest } : {}),
+      ...(proposal.gb_total_nominal_latest != null ? { gb_total_nominal_latest: proposal.gb_total_nominal_latest } : {}),
+      ...(proposal.birmingham_pip_m != null ? { birmingham_pip_m: proposal.birmingham_pip_m } : {}),
       wards: proposal.wards,
     };
     writeFileSync(join(PUBLISHED_DIR, `${id}.json`), JSON.stringify(published, null, 2));

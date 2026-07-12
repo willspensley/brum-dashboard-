@@ -6,6 +6,12 @@ import BenefitsDashboard from '../benefits/components/BenefitsDashboard';
 import UcEmpDashboard from '../uc-employment/components/UcEmpDashboard';
 import HousingBenefitView from '../housing-benefit/components/HousingBenefitView';
 import ClaimantDashboard from '../claimant-count/components/ClaimantDashboard';
+import UcCombinedDashboard from '../uc-combined/components/UcCombinedDashboard';
+import BenefitsBillView from '../benefits-bill/components/BenefitsBillView';
+import TwoChildView from '../two-child/components/TwoChildView';
+import ChildPovertyDashboard from '../child-poverty/components/ChildPovertyDashboard';
+import ConMoneyDashboard from '../constituency-money/components/ConMoneyDashboard';
+import PipDashboard from '../pip/components/PipDashboard';
 
 // ── Review ────────────────────────────────────────────────────────────────────
 // Renders the SAME dashboard component the Dashboards tab uses, fed the candidate
@@ -13,7 +19,7 @@ import ClaimantDashboard from '../claimant-count/components/ClaimantDashboard';
 // in Dashboards. Accept promotes it (writes public/data/<id>.json); no rebuild.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Proposal = { id: string; status: 'pending' | 'accepted' | 'rejected'; title: string; rejected_reason?: string; source: { as_of: string }; sources?: any[]; validation: any; wards: any[]; areas?: any[]; benchmarks?: any; geography?: string; metric?: string; months?: string[] };
+type Proposal = { id: string; status: 'pending' | 'accepted' | 'rejected'; title: string; rejected_reason?: string; source: { as_of: string }; sources?: any[]; validation: any; wards: any[]; areas?: any[]; benchmarks?: any; geography?: string; metric?: string; months?: string[]; years?: string[]; city?: any; lines?: any[]; constituencies?: any[]; year?: string; total_m?: number; per_head?: number | null; population?: number | null; child_element_month?: number; history?: any[]; benefit_labels?: any; uc_years?: string[]; categories?: any[]; conditions?: any[]; gb_total_real_latest?: number; gb_total_nominal_latest?: number; birmingham_pip_m?: number | null };
 
 // One entry per dataset — maps a proposal to its dashboard component + a summary line.
 const REGISTRY: Record<string, { label: string; summary: (p: Proposal) => string; render: (p: Proposal) => ReactNode }> = {
@@ -26,6 +32,57 @@ const REGISTRY: Record<string, { label: string; summary: (p: Proposal) => string
     label: 'UC Claimants in Work',
     summary: p => `${p.validation.wards_found}/69 wards · ward mean ${p.validation.ward_mean_pct}% in work`,
     render: p => <UcEmpDashboard data={{ as_of: p.source.as_of, ward_mean_pct: p.validation.ward_mean_pct, sources: p.sources ?? [], wards: p.wards }} />,
+  },
+  'pip-conditions': {
+    label: 'PIP Deep Dive',
+    summary: p => `GB-level · ${p.validation.categories_found} categories × ${p.validation.years_span} yrs · £${((p.gb_total_real_latest ?? 0) / 1000).toFixed(1)}bn real · anchor drift ${p.validation.anchor_drift_pct}%`,
+    render: p => <PipDashboard data={{
+      years: p.years ?? [], categories: p.categories ?? [], conditions: p.conditions ?? [],
+      gb_total_real_latest: p.gb_total_real_latest ?? 0, gb_total_nominal_latest: p.gb_total_nominal_latest ?? 0,
+      birmingham_pip_m: p.birmingham_pip_m ?? null, sources: p.sources ?? [],
+    }} />,
+  },
+  'constituency-money': {
+    label: 'Money Map (£)',
+    summary: p => `9 constituencies · £${((p.city?.sum_m ?? 0) / 1000).toFixed(2)}bn real DWP £ · ${p.year} · per-row checksums`,
+    render: p => <ConMoneyDashboard data={{
+      year: p.year ?? '', benefit_labels: p.benefit_labels ?? {}, uc_years: p.uc_years ?? [],
+      city: p.city ?? { sum_m: 0, la_total_m: 0, drift_pct: 0 },
+      sources: p.sources ?? [], constituencies: p.constituencies ?? [],
+    }} />,
+  },
+  'child-poverty': {
+    label: 'Child Poverty',
+    summary: p => `${p.validation.wards_found}/69 wards · ${p.validation.years_span}-yr series · ${p.validation.highest?.ward} ${p.validation.highest?.pct}% → ${p.validation.lowest?.ward} ${p.validation.lowest?.pct}%`,
+    render: p => <ChildPovertyDashboard data={{
+      as_of: p.source.as_of, years: p.years ?? [],
+      city: p.city ?? { city_series: null, england_series: null, city_latest: null, england_latest: null },
+      sources: p.sources ?? [], wards: p.wards,
+    }} />,
+  },
+  'uc-combined': {
+    label: 'UC — Full Picture',
+    summary: p => `${p.validation.wards_found}/69 wards · ${p.validation.total_claimants?.toLocaleString()} on UC · ${p.validation.total_not_in_work?.toLocaleString()} not in work`,
+    render: p => <UcCombinedDashboard data={{
+      as_of: p.source.as_of, city: p.city, sources: p.sources ?? [], wards: p.wards,
+    }} />,
+  },
+  'benefits-bill': {
+    label: 'Benefits Bill (£)',
+    summary: p => `LA-level · £${((p.total_m ?? 0) / 1000).toFixed(2)}bn total · £${p.per_head?.toLocaleString()}/resident · ${p.year}`,
+    render: p => <BenefitsBillView data={{
+      year: p.year ?? '', total_m: p.total_m ?? 0, per_head: p.per_head ?? null,
+      population: p.population ?? null, sources: p.sources ?? [], lines: p.lines ?? [],
+      history: p.history ?? [],
+    }} />,
+  },
+  'two-child': {
+    label: 'Two-Child Limit',
+    summary: p => `Constituency-level · ${p.validation.households_affected?.toLocaleString()} households · derived +£${p.validation.derived_annual_gain_m}m/yr`,
+    render: p => <TwoChildView data={{
+      as_of: p.source.as_of, child_element_month: p.child_element_month ?? 292.81,
+      city: p.city, sources: p.sources ?? [], constituencies: p.constituencies ?? [],
+    }} />,
   },
   'claimant-count': {
     label: 'Claimant Count',
@@ -118,12 +175,13 @@ export default function ReviewPage() {
         </div>
         <div className="hdr-dancetty" aria-hidden="true" />
 
-        {/* Proposal selector — one tab per staged proposal */}
+        {/* Proposal selector — wrapping chips so the whole queue is always visible */}
         {proposals.length > 1 && (
-          <div className="sub-tab-bar">
+          <div className="review-picker">
             {proposals.map(p => (
-              <button key={p.id} className={`sub-tab${p.id === selId ? ' active' : ''}`} onClick={() => { setSelId(p.id); setRejecting(false); }}>
-                {REGISTRY[p.id].label} · {p.status}
+              <button key={p.id} className={`review-chip${p.id === selId ? ' active' : ''}`} onClick={() => { setSelId(p.id); setRejecting(false); }}>
+                <span className={`review-dot ${p.status}`} aria-hidden="true" />
+                {REGISTRY[p.id].label}
               </button>
             ))}
           </div>

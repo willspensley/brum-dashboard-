@@ -41,7 +41,7 @@ export default function BenefitsMap({ wards, onSelect }: Props) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
 
-        const map = L.map(container, { zoomControl: true, scrollWheelZoom: false })
+        const map = L.map(container, { zoomControl: true, scrollWheelZoom: true })
           .setView([52.48, -1.9], 11);
         mapInstance = map;
         if (cancelled) { map.remove(); return; }
@@ -85,7 +85,7 @@ export default function BenefitsMap({ wards, onSelect }: Props) {
   }, []);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', height: '100%' }}>
       <div ref={containerRef} className="map-container" style={{ height: '100%', minHeight: 420 }} />
       {status !== 'ready' && (
         <div className="map-loading" style={{ position: 'absolute', inset: 0, zIndex: 1100 }}>
