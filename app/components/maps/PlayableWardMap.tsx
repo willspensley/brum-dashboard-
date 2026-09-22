@@ -30,6 +30,7 @@ export default function PlayableWardMap({ wards, max: maxProp, unitLabel = '', o
   // Init map once
   useEffect(() => {
     let cancelled = false;
+    let ro: ResizeObserver | null = null;
     const container = containerRef.current;
     if (!container) return;
 
@@ -48,10 +49,11 @@ export default function PlayableWardMap({ wards, max: maxProp, unitLabel = '', o
           11
         );
         mapRef.current = map;
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap © CARTO',
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors',
           maxZoom: 18,
         }).addTo(map);
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
 
         const layer = L.geoJSON(geo, {
           style: () => ({
@@ -64,6 +66,11 @@ export default function PlayableWardMap({ wards, max: maxProp, unitLabel = '', o
         layerRef.current = layer;
         map.invalidateSize();
         setStatus('ready');
+
+        // Leaflet doesn't notice later container resizes (Focus view,
+        // sidebar toggle, phone rotation) on its own — re-measure on change.
+        ro = new ResizeObserver(() => map.invalidateSize());
+        ro.observe(container);
       } catch {
         if (!cancelled) setStatus('error');
       }
@@ -71,6 +78,7 @@ export default function PlayableWardMap({ wards, max: maxProp, unitLabel = '', o
 
     return () => {
       cancelled = true;
+      if (ro) { ro.disconnect(); ro = null; }
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;

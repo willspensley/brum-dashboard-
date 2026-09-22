@@ -7,6 +7,7 @@ import { RAMP } from '@/lib/constants';
 import GridView from './tabs/GridView';
 import TableView from './tabs/TableView';
 import LabourScatter from './tabs/LabourScatter';
+import FocusableChart from './FocusableChart';
 import EconomicMatrix from './tabs/EconomicMatrix';
 import Compare from './tabs/Compare';
 import DetailPanel from './detail/DetailPanel';
@@ -19,13 +20,6 @@ import QualBars from '../education/components/QualBars';
 import EduDetailPanel from '../education/components/EduDetailPanel';
 import YouthDashboard from '../youth/components/YouthDashboard';
 import NeetDetailPanel from '../youth/components/NeetDetailPanel';
-import HousingDashboard from '../housing/components/HousingDashboard';
-import HousingDetailPanel from '../housing/components/HousingDetailPanel';
-import { buildHousingWards } from '@/lib/synth-housing';
-import { buildFiscalWards } from '@/lib/synth-fiscal';
-import type { HousingWard, FiscalWard } from '@/lib/types';
-import FiscalDashboard from '../fiscal/components/FiscalDashboard';
-import FiscalDetailPanel from '../fiscal/components/FiscalDetailPanel';
 import BenefitsDashboard from '../benefits/components/BenefitsDashboard';
 import UcEmpDashboard from '../uc-employment/components/UcEmpDashboard';
 import HousingBenefitView from '../housing-benefit/components/HousingBenefitView';
@@ -47,13 +41,14 @@ import OzzyStageView from '../ozzy-stage/components/OzzyStageView';
 import CrimeObsView from '../crime-observatory/components/CrimeObsView';
 import ScoringNote from './brand/ScoringNote';
 import BullAscii from './BullAscii';
+import { ASK_OZZY_CHAT_ENABLED } from '@/lib/features';
 
 const EduMap = dynamic(() => import('../education/components/EduMap'), { ssr: false });
 
 const MapView = dynamic(() => import('./tabs/MapView'), { ssr: false });
 const CrimeMap = dynamic(() => import('./tabs/crime/CrimeMap'), { ssr: false });
 
-type View = 'employment' | 'crime' | 'education' | 'youth' | 'housing' | 'fiscal' | 'benefits' | 'ucemp' | 'hbenefit' | 'flytip' | 'claimant' | 'bill' | 'twochild' | 'childpov' | 'conmoney' | 'pip' | 'wrongpay' | 'ucpayments' | 'ucweather' | 'pipplace' | 'ucstage' | 'pipstage' | 'ozzystage' | 'crimeobs';
+type View = 'employment' | 'crime' | 'education' | 'youth' | 'benefits' | 'ucemp' | 'hbenefit' | 'flytip' | 'claimant' | 'bill' | 'twochild' | 'childpov' | 'conmoney' | 'pip' | 'wrongpay' | 'ucpayments' | 'ucweather' | 'pipplace' | 'ucstage' | 'pipstage' | 'ozzystage' | 'crimeobs';
 type EmpSub = 'grid' | 'list' | 'scatter' | 'matrix' | 'map' | 'compare';
 type CrimeSub = 'crime-table' | 'crime-grid' | 'crime-map';
 type EduSub = 'edu-grid' | 'edu-table' | 'edu-chart' | 'edu-map';
@@ -94,17 +89,24 @@ const EDU_SOURCES = [
   },
 ];
 
+// WITHHELD FOR THE DEMONSTRATOR (2026-09-22) — see CHANGELOG, "Withheld pending
+// data fixes". The Employment and Youth & NEET views render `mergeData()`, which is
+// built from the legacy 68-ward FALLBACK array in lib/data.ts. That roster shares 33
+// ward codes with the canonical ONS 69-ward set and *every one of those 33 refers to a
+// different ward*, so any live dataset joined to it by code lands on the wrong ward
+// (e.g. Alum Rock's GVA captioned "Newtown"). Set this to `true` to restore both views
+// — but only once FALLBACK has been retired in favour of lib/wards.ts.
+const LEGACY_ROSTER_VIEWS_ENABLED = false;
+
 export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, eduMeta, neetData, crimeWards, crimeMonth }: Props) {
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<View>('employment');
+  const [view, setView] = useState<View>(LEGACY_ROSTER_VIEWS_ENABLED ? 'employment' : 'crime');
   const [empSub, setEmpSub] = useState<EmpSub>('grid');
   const [crimeSub, setCrimeSub] = useState<CrimeSub>('crime-table');
   const [eduSub, setEduSub] = useState<EduSub>('edu-grid');
   const [selected, setSelected] = useState<Ward | null>(null);
   const [selectedEdu, setSelectedEdu] = useState<EducationWard | null>(null);
   const [selectedYouth, setSelectedYouth] = useState<Ward | null>(null);
-  const [selectedHousing, setSelectedHousing] = useState<string | null>(null);
-  const [selectedFiscal, setSelectedFiscal] = useState<string | null>(null);
   const [selectedCrime, setSelectedCrime] = useState<string | null>(null);
   const [pinnedWards, setPinnedWards] = useState<string[]>([]);
   const [trendMode, setTrendMode] = useState<'12m' | 'pandemic'>('12m');
@@ -368,6 +370,11 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
       if (lev2) setEduSub(lev2);
       const sc = localStorage.getItem('sidebarCollapsed');
       if (sc === '1') setSidebarCollapsed(true);
+      else if (sc === null && window.matchMedia('(max-width: 900px)').matches) {
+        // First visit, no saved preference yet: default the sidebar to closed
+        // on phone/tablet widths so it doesn't cover the whole screen on load.
+        setSidebarCollapsed(true);
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -377,6 +384,19 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
       try { localStorage.setItem('sidebarCollapsed', next ? '1' : '0'); } catch { /* ignore */ }
       return next;
     });
+  };
+
+  const collapseSidebar = () => {
+    setSidebarCollapsed(true);
+    try { localStorage.setItem('sidebarCollapsed', '1'); } catch { /* ignore */ }
+  };
+
+  // On phone/tablet widths the sidebar is an overlay drawer — close it once a
+  // nav item is picked so the chosen dashboard is immediately visible.
+  const handleSidebarNavClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = (e.target as HTMLElement).closest('.dash-nav-btn');
+    if (!target) return;
+    if (window.matchMedia('(max-width: 900px)').matches) collapseSidebar();
   };
 
   useEffect(() => {
@@ -389,8 +409,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
     setPinnedWards(prev => {
       const idx = prev.indexOf(code);
       if (idx >= 0) return prev.filter(c => c !== code);
-      if (prev.length < 2) return [...prev, code];
-      return [prev[1], code];
+      return [...prev, code];
     });
   };
 
@@ -411,8 +430,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const selectedCrimeWard = crimeWards.find(w => w.ward_code === selectedCrime) ?? null;
   const isEdu     = view === 'education';
   const isYouth   = view === 'youth';
-  const isHousing = view === 'housing';
-  const isFiscal  = view === 'fiscal';
   const isBenefits = view === 'benefits';
   const isUcEmp = view === 'ucemp';
   const isHBenefit = view === 'hbenefit';
@@ -431,9 +448,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
   const isPipStage = view === 'pipstage';
   const isOzzyStage = view === 'ozzystage';
   const isCrimeObs = view === 'crimeobs';
-
-  const housingWards: HousingWard[] = useMemo(() => buildHousingWards(wards), [wards]);
-  const fiscalWards: FiscalWard[] = useMemo(() => buildFiscalWards(wards), [wards]);
 
   const bodyClass = isCrime ? ' crime-mode' : isEdu ? ' edu-mode' : '';
 
@@ -475,8 +489,8 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
       {/* Treatment A — permanent sidebar + main column */}
       <div className={`dash-shell${sidebarCollapsed ? ' collapsed' : ''}`} style={{ display: ready ? 'grid' : 'none' }}>
 
-        {/* Permanent sidebar */}
-        <aside className="dash-sidebar">
+        {/* Permanent sidebar — becomes an overlay drawer on phone/tablet widths */}
+        <aside className="dash-sidebar" onClick={handleSidebarNavClick}>
           {/* Brand */}
           <div className="dash-brand">
             <BullAscii
@@ -498,132 +512,110 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
           {/* Dashboards nav */}
           <div className="dash-nav-section">
             <div className="dash-nav-section-ttl">Reporting</div>
-            <button className={`dash-nav-btn${view === 'employment' ? ' active' : ''}`} onClick={() => setView('employment')}>
-              <span className="dash-nav-glyph">▦</span> Employment
-            </button>
+            {LEGACY_ROSTER_VIEWS_ENABLED && (
+              <button className={`dash-nav-btn${view === 'employment' ? ' active' : ''}`} onClick={() => setView('employment')}>
+                <span className="dash-nav-glyph">▦</span> Employment
+              </button>
+            )}
             <button className={`dash-nav-btn${isCrime ? ' active' : ''}`} onClick={() => setView('crime')}>
               <span className="dash-nav-glyph">⚠</span> Crime
-              {dsrc.crime === 'live' && <span className="dash-live-dot">●</span>}
             </button>
             <button className={`dash-nav-btn${isEdu ? ' active' : ''}`} onClick={() => setView('education')}>
               <span className="dash-nav-glyph">◈</span> Education &amp; Skills
             </button>
-            <button className={`dash-nav-btn${isYouth ? ' active' : ''}`} onClick={() => setView('youth')}>
-              <span className="dash-nav-glyph">◑</span> Youth &amp; NEET
-              {dsrc.neet === 'live' && <span className="dash-live-dot">●</span>}
-            </button>
-            <button className={`dash-nav-btn${isHousing ? ' active' : ''}`} onClick={() => setView('housing')}>
-              <span className="dash-nav-glyph">⌂</span> Housing
-            </button>
-            <button className={`dash-nav-btn${isFiscal ? ' active' : ''}`} onClick={() => setView('fiscal')}>
-              <span className="dash-nav-glyph">£</span> Fiscal Balance
-            </button>
+            {LEGACY_ROSTER_VIEWS_ENABLED && (
+              <button className={`dash-nav-btn${isYouth ? ' active' : ''}`} onClick={() => setView('youth')}>
+                <span className="dash-nav-glyph">◑</span> Youth &amp; NEET
+              </button>
+            )}
             {benefitsData && (
               <button className={`dash-nav-btn${isBenefits ? ' active' : ''}`} onClick={() => setView('benefits')}>
                 <span className="dash-nav-glyph">▤</span> Benefits (UC)
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {ucEmpData && (
               <button className={`dash-nav-btn${isUcEmp ? ' active' : ''}`} onClick={() => setView('ucemp')}>
                 <span className="dash-nav-glyph">◧</span> UC in Work
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {hbData && (
               <button className={`dash-nav-btn${isHBenefit ? ' active' : ''}`} onClick={() => setView('hbenefit')}>
                 <span className="dash-nav-glyph">⌂</span> Housing Benefit
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {flyTipData && (
               <button className={`dash-nav-btn${isFlyTip ? ' active' : ''}`} onClick={() => setView('flytip')}>
                 <span className="dash-nav-glyph">⚠</span> Fly-tipping
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {claimantData && (
               <button className={`dash-nav-btn${isClaimant ? ' active' : ''}`} onClick={() => setView('claimant')}>
                 <span className="dash-nav-glyph">▥</span> Claimant Count
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {billData && (
               <button className={`dash-nav-btn${isBill ? ' active' : ''}`} onClick={() => setView('bill')}>
                 <span className="dash-nav-glyph">£</span> Benefits Bill
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {twoChildData && (
               <button className={`dash-nav-btn${isTwoChild ? ' active' : ''}`} onClick={() => setView('twochild')}>
                 <span className="dash-nav-glyph">◔</span> Two-Child Limit
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {childPovData && (
               <button className={`dash-nav-btn${isChildPov ? ' active' : ''}`} onClick={() => setView('childpov')}>
                 <span className="dash-nav-glyph">◒</span> Child Poverty
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {conMoneyData && (
               <button className={`dash-nav-btn${isConMoney ? ' active' : ''}`} onClick={() => setView('conmoney')}>
                 <span className="dash-nav-glyph">◈</span> Money Map (£)
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {pipData && (
               <button className={`dash-nav-btn${isPip ? ' active' : ''}`} onClick={() => setView('pip')}>
                 <span className="dash-nav-glyph">✚</span> PIP Deep Dive
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {wrongPayData && (
               <button className={`dash-nav-btn${isWrongPay ? ' active' : ''}`} onClick={() => setView('wrongpay')}>
                 <span className="dash-nav-glyph">⚠</span> Wrong Payments
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {ucPaymentsData && (
               <button className={`dash-nav-btn${isUcPayments ? ' active' : ''}`} onClick={() => setView('ucpayments')}>
                 <span className="dash-nav-glyph">£</span> UC Payments
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {ucWeatherData && (
               <button className={`dash-nav-btn${isUcWeather ? ' active' : ''}`} onClick={() => setView('ucweather')}>
                 <span className="dash-nav-glyph">☁</span> UC Weather
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {pipPlaceData && (
               <button className={`dash-nav-btn${isPipPlace ? ' active' : ''}`} onClick={() => setView('pipplace')}>
                 <span className="dash-nav-glyph">✚</span> PIP Place
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {ucStageData && (
               <button className={`dash-nav-btn${isUcStage ? ' active' : ''}`} onClick={() => setView('ucstage')}>
                 <span className="dash-nav-glyph">▣</span> UC Stage 3D
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {pipStageData && (
               <button className={`dash-nav-btn${isPipStage ? ' active' : ''}`} onClick={() => setView('pipstage')}>
                 <span className="dash-nav-glyph">▣</span> PIP Stage 3D
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {ozzyStageData && (
               <button className={`dash-nav-btn${isOzzyStage ? ' active' : ''}`} onClick={() => setView('ozzystage')}>
                 <span className="dash-nav-glyph">◉</span> Ozzy Stage
-                <span className="dash-live-dot">●</span>
               </button>
             )}
             {crimeObsData && (
               <button className={`dash-nav-btn${isCrimeObs ? ' active' : ''}`} onClick={() => setView('crimeobs')}>
                 <span className="dash-nav-glyph">✚</span> Crime Deep Dive
-                <span className="dash-live-dot">●</span>
               </button>
             )}
           </div>
@@ -631,9 +623,11 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
           {/* Ask Ozzy link */}
           <div className="dash-nav-section">
             <div className="dash-nav-section-ttl">Ozzy</div>
-            <a href="/ozzy" className="dash-nav-btn">
-              <span className="dash-nav-glyph">?</span> Ask Ozzy
-            </a>
+            {ASK_OZZY_CHAT_ENABLED && (
+              <a href="/ozzy" className="dash-nav-btn">
+                <span className="dash-nav-glyph">?</span> Ask Ozzy
+              </a>
+            )}
             <a href="/about" className="dash-nav-btn">
               <span className="dash-nav-glyph">◉</span> About Ozzy
             </a>
@@ -649,6 +643,15 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             </svg>
           </div>
         </aside>
+
+        {!sidebarCollapsed && (
+          <button
+            type="button"
+            className="dash-backdrop"
+            aria-label="Close menu"
+            onClick={collapseSidebar}
+          />
+        )}
 
         {/* Main column */}
         <div className="wrap">
@@ -668,7 +671,7 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
               </button>
               <div>
                 <div className="hdr-title">
-                  {isCrimeObs ? 'Crime — Deep Dive' : isOzzyStage ? 'Ozzy Stage' : isPipStage ? 'PIP Stage 3D' : isUcStage ? 'UC Stage 3D' : isPipPlace ? 'PIP Place' : isUcWeather ? 'UC Money Weather' : isUcPayments ? 'UC Payments' : isWrongPay ? 'Wrong Payments' : isPip ? 'PIP: Where the Money Goes' : isConMoney ? 'The Constituency Money Map' : isChildPov ? 'Child Poverty' : isBill ? 'The Benefits Bill' : isTwoChild ? 'Two-Child Limit' : isClaimant ? 'Claimant Count' : isFlyTip ? 'Fly-tipping' : isHBenefit ? 'Housing Benefit' : isUcEmp ? 'UC Claimants in Work' : isBenefits ? 'Universal Credit' : isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : isHousing ? 'Housing Affordability' : isFiscal ? 'Ward Net Fiscal Balance' : 'Employment & Benefits'}
+                  {isCrimeObs ? 'Crime — Deep Dive' : isOzzyStage ? 'Ozzy Stage' : isPipStage ? 'PIP Stage 3D' : isUcStage ? 'UC Stage 3D' : isPipPlace ? 'PIP Place' : isUcWeather ? 'UC Money Weather' : isUcPayments ? 'UC Payments' : isWrongPay ? 'Wrong Payments' : isPip ? 'PIP: Where the Money Goes' : isConMoney ? 'The Constituency Money Map' : isChildPov ? 'Child Poverty' : isBill ? 'The Benefits Bill' : isTwoChild ? 'Two-Child Limit' : isClaimant ? 'Claimant Count' : isFlyTip ? 'Fly-tipping' : isHBenefit ? 'Housing Benefit' : isUcEmp ? 'UC Claimants in Work' : isBenefits ? 'Universal Credit' : isEdu ? 'Education & Skills' : isYouth ? 'Youth & NEET Risk' : isCrime ? 'Crime Dashboard' : 'Employment & Benefits'}
                 </div>
                 <div className="hdr-sub">
                   {isCrimeObs ? `${crimeObsData?.wards.length ?? '—'} wards · offences / 1,000 · 36-month trend · outcomes · ${crimeObsData?.months[0] ?? ''}→${crimeObsData?.as_of ?? ''} · ${crimeObsData?.city.latest_total?.toLocaleString() ?? ''} offences latest`
@@ -692,8 +695,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                     : isBenefits ? `${benefitsData?.wards.length ?? '—'} wards · % of residents on UC · ${benefitsData?.as_of ?? ''} · DWP`
                     : isEdu ? `${eduWards.length} wards · qualifications & skills`
                     : isYouth ? `${wards.length} wards · 16–24 NEET risk`
-                    : isHousing ? `${housingWards.length} wards · affordability pressure · modelled`
-                    : isFiscal ? `${fiscalWards.length} wards · net fiscal balance per head · modelled`
                     : isCrime ? `${crimeWards.length} wards · recorded crime · ${crimeMonth} · data.police.uk`
                     : `${wards.length} wards · claimant rate & deprivation`}
                 </div>
@@ -782,20 +783,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                 This is an estimate; no official ward-level NEET data exists.
               </ScoringNote>
             )}
-            {isHousing && (
-              <ScoringNote label="How wards are scored">
-                A modelled housing-pressure score ranks wards on affordability — overcrowding 45%, rent-to-income
-                35%, price-to-income 20% — split into deciles 1–10. Decile 10 (darkest) = highest pressure. A
-                modelled estimate, not an official measure.
-              </ScoringNote>
-            )}
-            {isFiscal && (
-              <ScoringNote label="What you're seeing">
-                Each ward's net fiscal balance per head = revenue raised − (benefits + service spend). Positive
-                (green) = a net contributor to the public purse; negative (red) = a net recipient. All figures are
-                modelled estimates.
-              </ScoringNote>
-            )}
 
             {/* Breadcrumb + legend — employment */}
             {view === 'employment' && (
@@ -815,17 +802,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
                   <span className="llbl" style={{ marginRight: 2 }}>Low</span>
                   {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
                   <span className="llbl" style={{ marginLeft: 2 }}>High — % no quals</span>
-                </div>
-              </div>
-            )}
-
-            {/* Breadcrumb + legend — housing */}
-            {isHousing && (
-              <div className="data-view-toolbar">
-                <div className="legend-row">
-                  <span className="llbl" style={{ marginRight: 2 }}>Lower pressure</span>
-                  {RAMP.map((c, i) => <div key={i} className="lsw" style={{ background: c }} />)}
-                  <span className="llbl" style={{ marginLeft: 2 }}>Higher</span>
                 </div>
               </div>
             )}
@@ -867,33 +843,69 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             <div className="panel" style={{ flex: 1, position: 'relative' }}>
               <div className="panel-body">
                 {/* Employment sub-views */}
-                {view === 'employment' && empSub === 'grid'    && <GridView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'employment' && empSub === 'list'    && <TableView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'employment' && empSub === 'scatter' && <LabourScatter wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'employment' && empSub === 'matrix'  && <EconomicMatrix wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'employment' && empSub === 'map'     && <MapView wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
-                {view === 'employment' && empSub === 'compare' && <Compare wards={wards} pinnedWards={pinnedWards} onUnpin={togglePin} />}
+                {view === 'employment' && empSub === 'grid' && (
+                  <FocusableChart title="Employment Grid">
+                    <GridView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
+                {view === 'employment' && empSub === 'list' && (
+                  <FocusableChart title="Employment Table">
+                    <TableView wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
+                {view === 'employment' && empSub === 'scatter' && (
+                  <FocusableChart title="Labour Scatter">
+                    <LabourScatter wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
+                {view === 'employment' && empSub === 'matrix' && <EconomicMatrix wards={wards} selected={selected} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />}
+                {view === 'employment' && empSub === 'map' && (
+                  <FocusableChart title="Employment Map">
+                    <MapView wards={wards} onSelect={code => setSelected(wards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
+                {view === 'employment' && empSub === 'compare' && <Compare wards={wards} pinnedWards={pinnedWards} onTogglePin={togglePin} />}
                 {/* Crime sub-views */}
-                {isCrime && crimeSub === 'crime-table' && <CrimeTable wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
-                {isCrime && crimeSub === 'crime-grid'  && <CrimeGrid  wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
-                {isCrime && crimeSub === 'crime-map'   && <CrimeMap   wards={crimeWards} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />}
+                {isCrime && crimeSub === 'crime-table' && (
+                  <FocusableChart title="Crime Table">
+                    <CrimeTable wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />
+                  </FocusableChart>
+                )}
+                {isCrime && crimeSub === 'crime-grid' && (
+                  <FocusableChart title="Crime Grid">
+                    <CrimeGrid wards={crimeWards} selected={selectedCrimeWard} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />
+                  </FocusableChart>
+                )}
+                {isCrime && crimeSub === 'crime-map' && (
+                  <FocusableChart title="Crime Map">
+                    <CrimeMap wards={crimeWards} onSelect={code => setSelectedCrime(prev => prev === code ? null : code)} />
+                  </FocusableChart>
+                )}
                 {/* Education sub-views */}
-                {isEdu && eduSub === 'edu-grid'  && <QualGrid  wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />}
-                {isEdu && eduSub === 'edu-table' && <QualTable wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />}
+                {isEdu && eduSub === 'edu-grid' && (
+                  <FocusableChart title="Education Grid">
+                    <QualGrid wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
+                {isEdu && eduSub === 'edu-table' && (
+                  <FocusableChart title="Education Table">
+                    <QualTable wards={eduWards} selected={selectedEdu} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
+                )}
                 {isEdu && eduSub === 'edu-chart' && (
                   <div style={{ padding: '18px 18px 0' }}>
-                    <QualBars wards={eduWards} selected={selectedEdu} />
+                    <FocusableChart title="Qualification Distribution">
+                      <QualBars wards={eduWards} selected={selectedEdu} />
+                    </FocusableChart>
                   </div>
                 )}
                 {isEdu && eduSub === 'edu-map' && (
-                  <EduMap wards={eduWards} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
+                  <FocusableChart title="Education Map">
+                    <EduMap wards={eduWards} onSelect={code => setSelectedEdu(eduWards.find(w => w.ward_code === code) ?? null)} />
+                  </FocusableChart>
                 )}
                 {/* Youth & NEET risk */}
                 {isYouth && <YouthDashboard wards={wards} selected={selectedYouth} onSelect={code => setSelectedYouth(prev => prev?.ward_code === code ? null : (wards.find(w => w.ward_code === code) ?? null))} />}
-                {/* Housing Affordability */}
-                {isHousing && <HousingDashboard wards={housingWards} selected={selectedHousing} onSelect={code => setSelectedHousing(prev => prev === code ? null : code)} />}
-                {/* Ward Net Fiscal Balance */}
-                {isFiscal && <FiscalDashboard wards={fiscalWards} selected={selectedFiscal} onSelect={code => setSelectedFiscal(prev => (!code || prev === code) ? null : code)} />}
               </div>
               <div className="bham-watermark">FORWARD · BIRMINGHAM</div>
             </div>
@@ -944,14 +956,6 @@ export default function Dashboard({ wards, dsrc, dsmeta, nomisDate, eduWards, ed
             ) : isYouth ? (
               selectedYouth ? (
                 <NeetDetailPanel ward={selectedYouth} wards={wards} onClose={() => setSelectedYouth(null)} />
-              ) : emptyBull
-            ) : isHousing ? (
-              selectedHousing ? (
-                <HousingDetailPanel ward={housingWards.find(w => w.ward_code === selectedHousing)!} wards={housingWards} onClose={() => setSelectedHousing(null)} />
-              ) : emptyBull
-            ) : isFiscal ? (
-              selectedFiscal ? (
-                <FiscalDetailPanel ward={fiscalWards.find(w => w.ward_code === selectedFiscal)!} wards={fiscalWards} onClose={() => setSelectedFiscal(null)} />
               ) : emptyBull
             ) : isCrime ? (
               selectedCrimeWard ? (

@@ -20,6 +20,7 @@ export default function ConMoneyMap({ constituencies, onSelect }: Props) {
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mapInstance: any = null;
+    let ro: ResizeObserver | null = null;
     const container = containerRef.current;
     if (!container) return;
 
@@ -44,9 +45,11 @@ export default function ConMoneyMap({ constituencies, onSelect }: Props) {
         mapInstance = map;
         if (cancelled) { map.remove(); return; }
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 18,
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors',
+          maxZoom: 18,
         }).addTo(map);
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
 
         const layer = L.geoJSON(geo, {
           style: feat => {
@@ -68,6 +71,11 @@ export default function ConMoneyMap({ constituencies, onSelect }: Props) {
         try { map.fitBounds(layer.getBounds(), { padding: [12, 12] }); } catch { /* keep default view */ }
         map.invalidateSize();
         setStatus('ready');
+
+        // Leaflet doesn't notice later container resizes (Focus view,
+        // sidebar toggle, phone rotation) on its own — re-measure on change.
+        ro = new ResizeObserver(() => map.invalidateSize());
+        ro.observe(container);
       } catch (e) {
         if (cancelled) return;
         setErrMsg(e instanceof Error ? e.message : String(e));
@@ -77,6 +85,7 @@ export default function ConMoneyMap({ constituencies, onSelect }: Props) {
 
     return () => {
       cancelled = true;
+      if (ro) { ro.disconnect(); ro = null; }
       if (mapInstance) { try { mapInstance.remove(); } catch { /* gone */ } mapInstance = null; }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

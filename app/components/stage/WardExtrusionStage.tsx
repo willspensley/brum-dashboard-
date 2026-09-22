@@ -255,6 +255,24 @@ function PointerPick({
   return null;
 }
 
+/**
+ * True on touch-primary devices. Deliberately the same query the stage HUD hint
+ * uses in globals.css, so the JS and the CSS agree on what counts as "a phone".
+ * Starts false so the server render and the first client render match, then
+ * corrects on mount — a mismatch here would be a hydration error.
+ */
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(hover:none) and (pointer:coarse)');
+    setCoarse(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setCoarse(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return coarse;
+}
+
 function CityScene({
   layout,
   valueByCode,
@@ -278,6 +296,7 @@ function CityScene({
 }) {
   const group = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const coarsePointer = useCoarsePointer();
 
   const heights = useMemo(() => {
     const m: Record<string, number> = {};
@@ -381,6 +400,21 @@ function CityScene({
         minPolarAngle={0.25}
         maxPolarAngle={Math.PI / 2.25}
         target={[0, maxHeight * 0.25, 0]}
+        // A phone gives you far less finger travel than a mouse gives you desk
+        // space, and two-finger rotation tracks the midpoint of the pair, which
+        // moves less than either finger does. At the default speed of 1 you run
+        // out of screen before you have turned the city very far. Touch only —
+        // desktop orbit feel is deliberately unchanged (desktop is the primary
+        // target per CLAUDE.md). rotateSpeed scales the touch rotate path via
+        // handleTouchMoveRotate in three-stdlib.
+        rotateSpeed={coarsePointer ? 1.8 : 1}
+        // Touch: one finger is left to the browser so a swipe over the stage
+        // scrolls the page. By default OrbitControls claims one-finger drag for
+        // rotation, which on a phone traps the scroll — the canvas fills most of
+        // the screen, so a thumb swipe just spun the city and the page never
+        // moved. Two fingers rotate and pinch-zoom. Mouse input is unaffected,
+        // so desktop drag-to-orbit still works exactly as before.
+        touches={{ ONE: undefined, TWO: THREE.TOUCH.DOLLY_ROTATE }}
       />
     </>
   );
@@ -469,7 +503,10 @@ export default function WardExtrusionStage({
       </Canvas>
       <div className="stage-hud">
         <span className="stage-hud-tag">BIRMINGHAM · 69 WARDS</span>
-        <span className="stage-hud-msg">Hover a ward · drag to orbit · Play walks the years</span>
+        {/* Two messages, one per input type — the desktop wording ("drag to
+            orbit") is wrong on touch, where one finger now scrolls the page. */}
+        <span className="stage-hud-msg stage-hud-pointer">Hover a ward · drag to orbit · Play walks the years</span>
+        <span className="stage-hud-msg stage-hud-touch">Tap a ward · two fingers to orbit &amp; zoom · Play walks the years</span>
       </div>
       {focusHud && (
         <div className="stage-hover-hud" data-testid="stage-hover-hud">

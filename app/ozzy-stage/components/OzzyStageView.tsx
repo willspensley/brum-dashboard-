@@ -6,6 +6,7 @@ import type { OzzyStageData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import StageExplainer from '../../components/stage/StageExplainer';
 import StageWardPanel from '../../components/stage/StageWardPanel';
+import FocusCloseButton from '../../components/stage/FocusCloseButton';
 
 const WardExtrusionStage = dynamic(() => import('../../components/stage/WardExtrusionStage'), {
   ssr: false,
@@ -22,7 +23,7 @@ function fmtM(m: number) {
   return `£${m.toFixed(0)}m`;
 }
 
-export default function OzzyStageView({ data }: { data: OzzyStageData }) {
+export default function OzzyStageView({ data, focusMode }: { data: OzzyStageData; focusMode?: boolean }) {
   const [layer, setLayer] = useState<Layer>('uc');
   const months = layer === 'uc' ? data.uc.months : data.pip.months;
   const [ti, setTi] = useState(Math.max(0, months.length - 1));
@@ -109,13 +110,16 @@ export default function OzzyStageView({ data }: { data: OzzyStageData }) {
     selected?.pip_series?.[Math.min(ti, (selected.pip_series?.length ?? 1) - 1)] ?? selected?.pip_latest;
 
   return (
-    <div className="body stage-layout ozzy-stage-body">
+    <div className={`body stage-layout ozzy-stage-body${focusMode ? ' stage-focus-solo' : ''}`}>
       <div className="lcol stage-lcol">
-        <StageExplainer
-          title="What you’re looking at"
-          body="Birmingham’s 69 wards as solid 3D blocks. Taller and darker = more people on Universal Credit or with a PIP award that month (switch tabs). Hover a ward for its name and count; click for a full breakdown; ▶ Play walks through time; drag to orbit · scroll to zoom."
-          metricNote="Heights are Stat-Xplore caseload counts — not £ per ward (that isn’t published). Official city UC/PIP spend sits on the right from DWP local-authority accounts."
-        />
+        {!focusMode && (
+          <StageExplainer
+            title="What you’re looking at"
+            body="Birmingham’s 69 wards as solid 3D blocks. Taller and darker = more people on Universal Credit or with a PIP award that month (switch tabs). Hover a ward for its name and count; click for a full breakdown; ▶ Play walks through time; drag to orbit (two fingers on touch) · scroll or pinch to zoom."
+            metricNote="Heights are Stat-Xplore caseload counts — not £ per ward (that isn’t published). Official city UC/PIP spend sits on the right from DWP local-authority accounts."
+            focusHref="/ozzy-stage/focus"
+          />
+        )}
 
         <div className="wx-toolbar stage-toolbar">
           <button
@@ -166,6 +170,7 @@ export default function OzzyStageView({ data }: { data: OzzyStageData }) {
           >
             spin
           </button>
+          {focusMode && <FocusCloseButton />}
         </div>
 
         <div className="stage-viewport">
@@ -182,6 +187,7 @@ export default function OzzyStageView({ data }: { data: OzzyStageData }) {
         </div>
       </div>
 
+      {!focusMode && (
       <div className="rcol">
         <div className="hb-headline">
           {/* City caseload stays at the top */}
@@ -311,6 +317,7 @@ export default function OzzyStageView({ data }: { data: OzzyStageData }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

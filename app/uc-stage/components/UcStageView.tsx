@@ -6,6 +6,7 @@ import type { UcWeatherData } from '@/lib/types';
 import { RAMP } from '@/lib/constants';
 import StageExplainer from '../../components/stage/StageExplainer';
 import StageWardPanel from '../../components/stage/StageWardPanel';
+import FocusCloseButton from '../../components/stage/FocusCloseButton';
 
 const WardExtrusionStage = dynamic(() => import('../../components/stage/WardExtrusionStage'), {
   ssr: false,
@@ -19,7 +20,7 @@ function fmtM(m: number) {
   return m >= 1000 ? `£${(m / 1000).toFixed(2)}bn` : `£${m.toFixed(0)}m`;
 }
 
-export default function UcStageView({ data }: { data: UcWeatherData }) {
+export default function UcStageView({ data, focusMode }: { data: UcWeatherData; focusMode?: boolean }) {
   const [ti, setTi] = useState(Math.max(0, data.months.length - 1));
   const [playing, setPlaying] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
@@ -88,13 +89,16 @@ export default function UcStageView({ data }: { data: UcWeatherData }) {
   }, [selected, data.wards, ti, metric]);
 
   return (
-    <div className="body stage-layout">
+    <div className={`body stage-layout${focusMode ? ' stage-focus-solo' : ''}`}>
       <div className="lcol stage-lcol">
-        <StageExplainer
-          title="What you’re looking at"
-          body="Birmingham’s 69 wards as solid 3D blocks. Taller / darker = more people on Universal Credit that month. Hover for name and count; click for a ward breakdown; ▶ Play (or scrub) walks through time; drag to orbit · scroll to zoom."
-          metricNote="Block height = Stat-Xplore caseload, not £ spent in the ward. City UC spend on the right is the official LA figure."
-        />
+        {!focusMode && (
+          <StageExplainer
+            title="What you’re looking at"
+            body="Birmingham’s 69 wards as solid 3D blocks. Taller / darker = more people on Universal Credit that month. Hover for name and count; click for a ward breakdown; ▶ Play (or scrub) walks through time; drag to orbit (two fingers on touch) · scroll or pinch to zoom."
+            metricNote="Block height = Stat-Xplore caseload, not £ spent in the ward. City UC spend on the right is the official LA figure."
+            focusHref="/uc-stage/focus"
+          />
+        )}
 
         <div className="wx-toolbar stage-toolbar">
           <button className="refresh-btn" type="button" onClick={() => setPlaying((p) => !p)}>
@@ -143,6 +147,7 @@ export default function UcStageView({ data }: { data: UcWeatherData }) {
           >
             spin
           </button>
+          {focusMode && <FocusCloseButton />}
         </div>
 
         <div className="stage-viewport">
@@ -158,6 +163,7 @@ export default function UcStageView({ data }: { data: UcWeatherData }) {
         </div>
       </div>
 
+      {!focusMode && (
       <div className="rcol">
         <div className="hb-headline">
           <div className="hb-big" style={{ color: '#2a55bf' }}>
@@ -252,6 +258,7 @@ export default function UcStageView({ data }: { data: UcWeatherData }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

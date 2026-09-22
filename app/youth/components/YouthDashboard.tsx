@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Ward } from '@/lib/types';
 import NeetGrid from './NeetGrid';
 import NeetTable from './NeetTable';
+import FocusableChart from '../../components/FocusableChart';
 
 type Sub = 'grid' | 'table';
 
@@ -51,9 +52,17 @@ export default function YouthDashboard({ wards, selected, onSelect }: Props) {
       </div>
 
       {/* Grid / table — selection flows up to the shared right-side detail panel */}
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        {sub === 'grid' && <NeetGrid wards={wards} selected={selected} onSelect={onSelect} />}
-        {sub === 'table' && <NeetTable wards={wards} selected={selected} onSelect={onSelect} />}
+      <div className="scroll-release" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        {sub === 'grid' && (
+          <FocusableChart title="Youth &amp; NEET Grid">
+            <NeetGrid wards={wards} selected={selected} onSelect={onSelect} />
+          </FocusableChart>
+        )}
+        {sub === 'table' && (
+          <FocusableChart title="Youth &amp; NEET Table">
+            <NeetTable wards={wards} selected={selected} onSelect={onSelect} />
+          </FocusableChart>
+        )}
       </div>
 
     </div>

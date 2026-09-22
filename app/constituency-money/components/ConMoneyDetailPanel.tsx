@@ -1,4 +1,5 @@
 import type { ConMoneyConstituency, ConMoneyData } from '@/lib/types';
+import FocusableChart from '../../components/FocusableChart';
 
 // Constituency detail — every benefit's real £, ranked; UC mini-trend; rank/share chips.
 interface Props {
@@ -62,7 +63,9 @@ export default function ConMoneyDetailPanel({ constituency: c, data, onClose }: 
       {t.length >= 2 && (
         <div className="d-sec">
           <div className="d-sec-ttl">Universal Credit, {data.uc_years[0]} → {data.uc_years.at(-1)}</div>
-          <svg width="100%" height="74" viewBox="0 0 252 74" style={{ display: 'block' }}>
+          <FocusableChart title={`${c.name} — Universal Credit trend`}>
+          <div className="chart-canvas-wrap" style={{ height: 74 }}>
+          <svg width="100%" height="100%" viewBox="0 0 252 74" style={{ display: 'block' }}>
             {(() => {
               const max = Math.max(...t, 1);
               const x = (i: number) => 2 + (i / (t.length - 1)) * 200;
@@ -76,6 +79,8 @@ export default function ConMoneyDetailPanel({ constituency: c, data, onClose }: 
               );
             })()}
           </svg>
+          </div>
+          </FocusableChart>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--muted2)' }}>
             <span>{data.uc_years[0]} £{Math.round(t[0])}m</span>
             <span>×{(t.at(-1)! / (t[0] || 1)).toFixed(1)} in {t.length} years</span>

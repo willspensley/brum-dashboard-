@@ -19,6 +19,7 @@ export default function MapView({ wards, onSelect }: Props) {
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mapInstance: any = null;
+    let ro: ResizeObserver | null = null;
     const container = containerRef.current;
     if (!container) return;
 
@@ -38,8 +39,8 @@ export default function MapView({ wards, onSelect }: Props) {
         mapInstance = map;
         if (cancelled) { map.remove(); return; }
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '© OSM, © CARTO', maxZoom: 18 }).addTo(map);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 18, pane: 'shadowPane' }).addTo(map);
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, pane: 'shadowPane' }).addTo(map);
 
         L.geoJSON(geo, {
           style: (f) => {
@@ -73,6 +74,13 @@ export default function MapView({ wards, onSelect }: Props) {
         // once more in case a parent layout shift changed its dimensions.
         map.invalidateSize();
         setStatus('ready');
+
+        // Leaflet doesn't notice later container resizes on its own (e.g.
+        // opening Focus view, toggling the sidebar, rotating the phone) —
+        // it just keeps rendering at its original size. Watch the container
+        // and re-measure whenever it actually changes.
+        ro = new ResizeObserver(() => map.invalidateSize());
+        ro.observe(container);
       } catch (e) {
         if (cancelled) return;
         setErrMsg(e instanceof Error ? e.message : String(e));
@@ -82,6 +90,7 @@ export default function MapView({ wards, onSelect }: Props) {
 
     return () => {
       cancelled = true;
+      if (ro) { ro.disconnect(); ro = null; }
       if (mapInstance) {
         try { mapInstance.remove(); } catch { /* already gone */ }
         mapInstance = null;

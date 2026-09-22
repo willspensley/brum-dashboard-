@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import type { FlyTipArea, FlyTipData } from '@/lib/types';
 import ScoringNote from '../../components/brand/ScoringNote';
 import { RAMP } from '@/lib/constants';
+import FocusableChart from '../../components/FocusableChart';
 
 const FlyTipMap = dynamic(() => import('./FlyTipMap'), { ssr: false });
 
@@ -45,7 +46,7 @@ export default function FlyTippingView({ data }: { data: FlyTipData }) {
 
   const wolv = useMemo(() => areas.find(isWolv) ?? null, [areas]);
   const fell = useMemo(() => fallingAreas(areas), [areas]);
-  const onlyWolvFell = fell.length === 1 && wolv && isWolv(fell[0]);
+  const onlyWolvFell = fell.length === 1 && !!wolv && isWolv(fell[0]);
 
   const maxPeer = Math.max(...areas.map(a => a.value), wmca ?? 0, england ?? 0, 1);
   const scale = Math.ceil(maxPeer / 5) * 5 || 40;
@@ -119,8 +120,11 @@ export default function FlyTippingView({ data }: { data: FlyTipData }) {
         )}
 
         <div className="panel" style={{ flex: 1, position: 'relative' }}>
+          {/* Only the outlier view opts into the narrow-screen scroll release.
+              The map branch sets height:100% deliberately and would collapse if
+              that height were released, so it is deliberately left out. */}
           <div
-            className="panel-body"
+            className={`panel-body${sub === 'outlier' ? ' scroll-release' : ''}`}
             style={
               sub === 'map'
                 ? { padding: 0, height: '100%' }
@@ -175,28 +179,38 @@ export default function FlyTippingView({ data }: { data: FlyTipData }) {
             )}
 
             {sub === 'history' && (
-              <HistoryChart
-                years={years}
-                areas={areas}
-                bhamSeries={data.city?.series ?? []}
-                bench={data.bench_series}
-              />
+              <FocusableChart title="Fly-tipping History">
+                <HistoryChart
+                  years={years}
+                  areas={areas}
+                  bhamSeries={data.city?.series ?? []}
+                  bench={data.bench_series}
+                />
+              </FocusableChart>
             )}
 
             {sub === 'change' && (
-              <DumbbellChange areas={areas} firstYear={firstYear} lastYear={lastYear} />
+              <FocusableChart title="Fly-tipping Change">
+                <DumbbellChange areas={areas} firstYear={firstYear} lastYear={lastYear} />
+              </FocusableChart>
             )}
 
             {sub === 'multiples' && (
-              <SmallMultiples years={years} areas={areas} benchEngland={data.bench_series?.england ?? []} />
+              <FocusableChart title="Fly-tipping Small Multiples">
+                <SmallMultiples years={years} areas={areas} benchEngland={data.bench_series?.england ?? []} />
+              </FocusableChart>
             )}
 
             {sub === 'table' && (
-              <PeerTable areas={areas} years={years} firstYear={firstYear} lastYear={lastYear} wmca={wmca} england={england} />
+              <FocusableChart title="Fly-tipping Peer Table">
+                <PeerTable areas={areas} years={years} firstYear={firstYear} lastYear={lastYear} wmca={wmca} england={england} />
+              </FocusableChart>
             )}
 
             {sub === 'map' && (
-              <FlyTipMap areas={areas} asOf={data.as_of} />
+              <FocusableChart title="Fly-tipping Map">
+                <FlyTipMap areas={areas} asOf={data.as_of} />
+              </FocusableChart>
             )}
 
             {sub === 'outlier' && (
@@ -697,7 +711,7 @@ function HistoryChart({
         <strong style={{ color: GREEN }}>Wolverhampton</strong> in green (performance outlier) ·
         other boroughs light navy · dashed gold = WMCA · dashed grey = England.
       </div>
-      <div style={{ height: 'calc(100% - 36px)', minHeight: 300 }}>
+      <div className="chart-canvas-wrap" style={{ height: 'calc(100% - 36px)', minHeight: 300 }}>
         <canvas ref={canvasRef} />
       </div>
     </div>
@@ -880,7 +894,7 @@ function PeerTable({
   england: number | null;
 }) {
   return (
-    <div style={{ overflow: 'auto', padding: 4 }}>
+    <div className="scroll-release-x" style={{ overflow: 'auto', padding: 4 }}>
       <table className="data-table">
         <thead>
           <tr>
